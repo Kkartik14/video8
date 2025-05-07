@@ -1,0 +1,29 @@
+{
+  "name": "prompt-to-2d-video-generator",
+  "version": "1.0.0",
+  "description": "Convert natural language prompts into animated educational videos using LLM and Manim",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node setup.js",
+    "start": "node index.js",
+    "frontend": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "frontend:start": "cd frontend && npm start",
+    "backend": "python3 backend/main.py",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "python3 -m pip install -r requirements.txt && npm run install:frontend",
+    "build": "npm run frontend:build",
+    "start:prod": "npm run frontend:start & npm run backend"
+  },
+  "keywords": [
+    "manim",
+    "animation",
+    "llm",
+    "claude",
+    "groq",
+    "education",
+    "video"
+  ],
+  "author": "",
+  "license": "MIT"
+} 
