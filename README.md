@@ -33,7 +33,7 @@ After setup is complete, start the application:
 npm start
 ```
 
-This will start both the backend server at http://localhost:8000 and the frontend at http://localhost:3000.
+This will start both the backend server at http://localhost:8002 and the frontend at http://localhost:3000.
 
 ## 📦 Production Deployment
 
@@ -92,7 +92,7 @@ Open your browser to `http://localhost:3000` to access the modern UI.
 Send a POST request to `/generate` with your prompt:
 
 ```bash
-curl -X POST http://localhost:8000/generate \
+curl -X POST http://localhost:8002/generate \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Visualize the Pythagorean theorem with animated squares and triangles", "model": "claude"}'
 ```
@@ -108,9 +108,9 @@ If you see a "Connection Refused" error:
 python3 backend/main.py
 ```
 
-2. Check if the port 8000 is in use by another application:
+2. Check if the port 8002 is in use by another application:
 ```bash
-lsof -i :8000
+lsof -i :8002
 ```
 
 3. Verify your `.env` file has the required API keys:
@@ -136,6 +136,18 @@ chmod 755 outputs
 ```bash
 python3 -m pip install manim --upgrade
 ```
+
+4. If you encounter "self reference" or "indentation" errors in the generated code:
+   - These errors are usually fixed automatically by our error handling system
+   - For persistent issues, try using a simpler prompt or one of our template animations
+
+### Video Not Found Issues
+
+If you receive a 404 error when trying to view a generated video:
+
+1. Make sure the video was successfully generated without errors
+2. Check that the URL path matches the format returned by the API (`/outputs/{video_id}`)
+3. If using a custom setup, ensure the frontend is correctly configured to access the backend URL
 
 ## 🛠️ Project Structure
 

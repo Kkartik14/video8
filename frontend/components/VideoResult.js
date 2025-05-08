@@ -5,7 +5,7 @@ const VideoResult = ({ videoPath }) => {
   if (!videoPath) return null;
 
   // Ensure the video path is a full URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
   const fullVideoPath = videoPath.startsWith('http') 
     ? videoPath 
     : `${apiUrl}/${videoPath.replace(/^\//, '')}`;

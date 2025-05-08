@@ -111,6 +111,168 @@ class CustomAnimation(Scene):
         
         self.play(Indicate(area_c), run_time=1)
         self.wait(1)
+''',
+            "binary_search": '''from manim import *
+import math
+import numpy as np
+
+class CustomAnimation(Scene):
+    def construct(self):
+        # Title
+        title = Text("Binary Search", font_size=48)
+        self.play(Write(title))
+        self.wait(1)
+        self.play(title.animate.scale(0.8).to_edge(UP))
+        
+        # Create a sorted array
+        array = [1, 3, 5, 7, 9, 11, 13, 15, 17]
+        target = 11
+        
+        # Visual representation of array
+        squares = []
+        labels = []
+        
+        # Create squares and labels for each element
+        for i, num in enumerate(array):
+            square = Square(side_length=1)
+            square.set_stroke(WHITE, 2)
+            square.set_fill(BLUE, opacity=0.5)
+            
+            label = Text(str(num), font_size=36)
+            
+            squares.append(square)
+            labels.append(label)
+        
+        # Arrange squares in a line
+        squares_group = VGroup(*squares).arrange(RIGHT, buff=0.1)
+        squares_group.move_to(ORIGIN)
+        
+        # Position labels in squares
+        for i, (square, label) in enumerate(zip(squares, labels)):
+            label.move_to(square.get_center())
+        
+        # Show array
+        array_label = Text("Sorted Array:", font_size=36).next_to(squares_group, UP * 2)
+        self.play(Write(array_label))
+        self.play(
+            *[Create(square) for square in squares],
+            *[Write(label) for label in labels],
+            run_time=2
+        )
+        self.wait(1)
+        
+        # Target value
+        target_text = Text(f"Target: {target}", font_size=36).next_to(array_label, RIGHT * 4)
+        self.play(Write(target_text))
+        self.wait(1)
+        
+        # Initialize pointers
+        low, high = 0, len(array) - 1
+        
+        # Create pointer labels
+        low_label = Text("Low", font_size=24, color=GREEN).next_to(squares[low], DOWN)
+        high_label = Text("High", font_size=24, color=RED).next_to(squares[high], DOWN)
+        mid_label = None
+        
+        self.play(
+            Write(low_label),
+            Write(high_label)
+        )
+        self.wait(1)
+        
+        # Binary search iterations
+        iteration = 1
+        found = False
+        
+        while low <= high and not found:
+            # Calculate middle index
+            mid = (low + high) // 2
+            
+            # Create or move mid pointer
+            if mid_label:
+                self.play(
+                    mid_label.animate.next_to(squares[mid], DOWN)
+                )
+            else:
+                mid_label = Text("Mid", font_size=24, color=YELLOW).next_to(squares[mid], DOWN)
+                self.play(Write(mid_label))
+            
+            # Highlight current element being compared
+            self.play(
+                squares[mid].animate.set_fill(YELLOW, opacity=0.8),
+                labels[mid].animate.set_color(BLACK)
+            )
+            
+            # Show iteration
+            iteration_text = Text(f"Iteration {iteration}", font_size=36).to_edge(LEFT+UP)
+            comparison_text = Text(f"Comparing {array[mid]} with target {target}", font_size=28).next_to(iteration_text, DOWN)
+            
+            self.play(
+                Write(iteration_text),
+                Write(comparison_text)
+            )
+            self.wait(1)
+            
+            # Check if element is found
+            if array[mid] == target:
+                self.play(
+                    squares[mid].animate.set_fill(GREEN, opacity=0.8),
+                    FadeOut(comparison_text)
+                )
+                result_text = Text(f"Found {target} at index {mid}!", font_size=32, color=GREEN).next_to(iteration_text, DOWN)
+                self.play(Write(result_text))
+                found = True
+            elif array[mid] < target:
+                self.play(
+                    squares[mid].animate.set_fill(BLUE, opacity=0.5),
+                    labels[mid].animate.set_color(WHITE),
+                    FadeOut(comparison_text)
+                )
+                
+                # Update low pointer
+                low = mid + 1
+                self.play(
+                    low_label.animate.next_to(squares[low], DOWN),
+                    squares[low-1:mid+1].animate.set_fill(GREY, opacity=0.2),
+                    *[label.animate.set_color(GREY) for label in labels[low-1:mid+1]]
+                )
+                
+                update_text = Text(f"{array[mid]} < {target}, so search right half", font_size=28).next_to(iteration_text, DOWN)
+                self.play(Write(update_text))
+                self.wait(1)
+                self.play(FadeOut(update_text))
+            else:
+                self.play(
+                    squares[mid].animate.set_fill(BLUE, opacity=0.5),
+                    labels[mid].animate.set_color(WHITE),
+                    FadeOut(comparison_text)
+                )
+                
+                # Update high pointer
+                high = mid - 1
+                self.play(
+                    high_label.animate.next_to(squares[high], DOWN) if high >= 0 else high_label.animate.shift(LEFT * 3),
+                    squares[mid:high+2].animate.set_fill(GREY, opacity=0.2) if high >= 0 else squares[mid:].animate.set_fill(GREY, opacity=0.2),
+                    *[label.animate.set_color(GREY) for label in labels[mid:high+2]] if high >= 0 else [label.animate.set_color(GREY) for label in labels[mid:]]
+                )
+                
+                update_text = Text(f"{array[mid]} > {target}, so search left half", font_size=28).next_to(iteration_text, DOWN)
+                self.play(Write(update_text))
+                self.wait(1)
+                self.play(FadeOut(update_text))
+            
+            self.play(FadeOut(iteration_text))
+            iteration += 1
+            
+            # Break if we don't find it after reasonable iterations
+            if iteration > 5:
+                break
+                
+        if not found:
+            not_found_text = Text(f"Target {target} not found in array!", font_size=32, color=RED).to_edge(DOWN)
+            self.play(Write(not_found_text))
+        
+        self.wait(2)
 '''
         }
         
@@ -149,6 +311,11 @@ class CustomAnimation(Scene):
         if any(keyword in prompt.lower() for keyword in ["pythagorean", "theorem", "square", "triangle"]):
             print("Using pre-built Pythagorean theorem template")
             return self.templates["pythagorean"]
+        
+        # Check if prompt is about binary search
+        if any(keyword in prompt.lower() for keyword in ["binary search", "sorted array", "searching algorithm"]):
+            print("Using pre-built binary search template")
+            return self.templates["binary_search"]
             
         # For other prompts, try to generate with Claude
         try:
@@ -166,6 +333,9 @@ Requirements:
 7. Keep the animation under 1 minute
 8. IMPORTANT: Do NOT use Tex, MathTex, or any LaTeX-dependent objects as they require LaTeX. Use Text instead.
 9. IMPORTANT: Use Create() instead of ShowCreation() as the latter is deprecated
+10. IMPORTANT: Do NOT include any self.wait() or other self references outside of the construct method
+11. IMPORTANT: All code that references 'self' MUST be properly indented inside the construct method
+12. Include a final self.wait(2) at the end of the construct method to allow viewing the final state
 
 The code MUST start exactly like this:
 from manim import *
@@ -198,55 +368,93 @@ class CustomAnimation(Scene):
             )
             
             if response.status_code != 200:
-                raise Exception(f"API request failed with status code {response.status_code}: {response.text}")
+                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
             
-            # Parse the response
-            response_data = response.json()
-            raw_generated_code = response_data.get("completion", "").strip()
+            result = response.json()
+            code = result.get("completion", "")
+            print(f"Raw response from Claude:\n{code[:100]}...")
             
-            # For debugging
-            print("Raw response from Claude:")
-            print(raw_generated_code[:100] + "..." if len(raw_generated_code) > 100 else raw_generated_code)
+            # Validate and fix the generated code
+            code = self.validate_and_fix_code(code)
             
-            # Check if response starts with explanatory text and remove it
-            if not raw_generated_code.startswith("from manim import"):
-                # Find the first line that looks like code
-                code_start = raw_generated_code.find("from manim import")
-                if code_start != -1:
-                    raw_generated_code = raw_generated_code[code_start:]
-                else:
-                    # If we can't find proper imports, use the default template
-                    print("Could not find proper code in Claude's response, using default template")
-                    return self.default_template
-            
-            # Check for common issues
-            if "MathTex(" in raw_generated_code or "Tex(" in raw_generated_code:
-                print("Found LaTeX objects in code, using default template instead")
-                return self.default_template
-                
-            if "math.sqrt" in raw_generated_code and "import math" not in raw_generated_code:
-                # Add math import if missing
-                raw_generated_code = "import math\n" + raw_generated_code
-                
-            if "np." in raw_generated_code and "import numpy as np" not in raw_generated_code:
-                # Add numpy import if missing
-                raw_generated_code = "import numpy as np\n" + raw_generated_code
-            
-            # Replace deprecated methods
-            raw_generated_code = raw_generated_code.replace("ShowCreation(", "Create(")
-            
-            # Validate the basic structure
-            if not self.validate_code(raw_generated_code):
-                print("Generated code does not have required elements, using default template")
-                return self.default_template
-                
-            return raw_generated_code
+            return code
             
         except Exception as e:
-            print(f"Error in LLM handler: {str(e)}")
-            # Return the default template in case of any error
+            print(f"Error generating code with Claude: {str(e)}")
+            print("Falling back to default template")
             return self.default_template
+    
+    def validate_and_fix_code(self, code: str) -> str:
+        """Validate and fix common issues in the generated Manim code."""
+        # Remove any explanatory text at the beginning
+        if not code.strip().startswith('from manim import'):
+            start_idx = code.find('from manim import')
+            if start_idx != -1:
+                code = code[start_idx:]
+            else:
+                print("Could not find Manim import statement, using default template")
+                return self.default_template
+                
+        # Replace deprecated methods
+        code = code.replace("ShowCreation(", "Create(")
             
+        # Fix missing imports
+        if "math." in code and "import math" not in code:
+            code = "import math\n" + code
+            
+        if "np." in code and "import numpy as np" not in code:
+            code = "import numpy as np\n" + code
+            
+        # Check for LaTeX (which we don't want)
+        if "MathTex(" in code or "Tex(" in code:
+            print("Found LaTeX objects in code, using default template instead")
+            return self.default_template
+        
+        # Check if all code is inside the class and method
+        fixed_lines = []
+        in_class = False
+        in_method = False
+        class_indent = ""
+        method_indent = ""
+        
+        lines = code.split('\n')
+        for i, line in enumerate(lines):
+            # Track if we're in the CustomAnimation class
+            if line.strip().startswith("class CustomAnimation"):
+                in_class = True
+                class_indent = line[:line.find("class")]
+                fixed_lines.append(line)
+                continue
+                
+            # Track if we're in the construct method
+            if in_class and "def construct(self" in line:
+                in_method = True
+                method_indent = line[:line.find("def")]
+                fixed_lines.append(line)
+                continue
+                
+            # Remove any self references outside of the method
+            if "self." in line and not in_method:
+                # Skip this line
+                continue
+                
+            # Add line normally
+            fixed_lines.append(line)
+        
+        # Ensure the code ends with a wait
+        # Find the last line inside the construct method
+        for i in range(len(fixed_lines) - 1, 0, -1):
+            line = fixed_lines[i]
+            if line.strip() and in_method and line.startswith(method_indent + " "):
+                # Check if the last line is already a wait
+                if not "self.wait" in line:
+                    # Add a wait as the last line
+                    fixed_lines.insert(i + 1, method_indent + "    self.wait(2)  # Final wait")
+                break
+                
+        fixed_code = "\n".join(fixed_lines)
+        return fixed_code
+
     def validate_code(self, code: str) -> bool:
         """
         Basic validation of generated Manim code.

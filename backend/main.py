@@ -62,39 +62,48 @@ async def generate_video(request: PromptRequest):
         # Create temporary directory for video output
         with tempfile.TemporaryDirectory() as temp_dir:
             # Generate and render the video
-            video_path = scene_generator.create_video(
+            video_id = scene_generator.create_video(
                 manim_code,
                 output_dir=temp_dir,
                 generation_id=generation_id
             )
             
-            # Ensure the path is relative to the root directory
-            if not video_path.startswith('/'):
-                if video_path.startswith('outputs/'):
-                    video_path = video_path
-                else:
-                    video_path = f"outputs/{os.path.basename(video_path)}"
-            
+            # Return the video_id which will be used to construct the URL
             return GenerationResponse(
-                video_path=video_path,
+                video_path=f"/outputs/{video_id}",
                 message="Video generated successfully!"
             )
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/video/{video_id}")
+@app.get("/outputs/{video_id}")
 async def get_video(video_id: str):
-    video_path = f"outputs/{video_id}.mp4"
-    
-    # Ensure outputs directory is relative to script path
+    # Get the base directory and parent directory
     base_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(base_dir)
-    full_path = os.path.join(parent_dir, video_path)
     
-    if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail=f"Video not found at {full_path}")
-    return FileResponse(full_path)
+    # Look for the video in different possible locations where Manim might have saved it
+    possible_locations = [
+        # Check direct outputs folder first
+        os.path.join(parent_dir, "outputs", f"{video_id}.mp4"),
+        # Check in video folders with quality settings
+        os.path.join(parent_dir, "outputs", "videos", f"scene_{video_id}", "720p30", f"{video_id}.mp4"),
+        os.path.join(parent_dir, "outputs", "videos", f"scene_{video_id}", "1080p60", f"{video_id}.mp4"),
+    ]
+    
+    # Try each location
+    for location in possible_locations:
+        if os.path.exists(location):
+            return FileResponse(location)
+    
+    # If we got here, we couldn't find the video
+    raise HTTPException(status_code=404, detail=f"Video not found. Tried locations: {possible_locations}")
+
+# Keep the old route for compatibility
+@app.get("/video/{video_id}")
+async def get_video_old(video_id: str):
+    return await get_video(video_id)
 
 if __name__ == "__main__":
     import uvicorn

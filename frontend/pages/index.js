@@ -24,7 +24,7 @@ export default function Home() {
       
       if (err.toString().includes('ERR_CONNECTION_REFUSED')) {
         setError("Could not connect to the backend server. Please make sure it's running at " + 
-                 (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'));
+                 (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'));
       } else {
         setError(err.toString());
       }
