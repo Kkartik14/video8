@@ -40,7 +40,7 @@ def main():
         # Text input for prompt
         prompt = st.text_area(
             "Enter your animation prompt:",
-            placeholder="Example: Visualize the Pythagorean theorem with animated squares and triangles",
+            placeholder="Enter a prompt to generate an animation",
             height=100
         )
         
@@ -93,7 +93,6 @@ def main():
     st.subheader("Example Prompts")
     
     example_prompts = [
-        "Visualize the Pythagorean theorem with animated squares and triangles",
         "Show how binary search works with an array of numbers",
         "Demonstrate the concept of gravitational force between two objects",
         "Illustrate the quadratic formula solving process",

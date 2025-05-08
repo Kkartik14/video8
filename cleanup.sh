@@ -21,7 +21,8 @@ echo "Cleaning up generated output files..."
 rm -rf outputs/videos/*
 rm -rf outputs/texts/*
 rm -rf outputs/Tex/*
+rm -rf outputs/scripts/*
 # Keep the directories but remove contents
-mkdir -p outputs/videos outputs/texts outputs/Tex
+mkdir -p outputs/videos outputs/texts outputs/Tex outputs/scripts
 
 echo "Cleanup complete!" 

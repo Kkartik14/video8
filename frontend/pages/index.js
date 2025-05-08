@@ -10,6 +10,7 @@ import { generateVideo } from '../utils/api';
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [videoPath, setVideoPath] = useState(null);
+  const [scriptPath, setScriptPath] = useState(null);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (formData) => {
@@ -19,6 +20,7 @@ export default function Home() {
     try {
       const result = await generateVideo(formData.prompt, formData.model);
       setVideoPath(result.video_path);
+      setScriptPath(result.script_path);
     } catch (err) {
       console.error("Error generating video:", err);
       
@@ -77,7 +79,7 @@ export default function Home() {
               </div>
             )}
             
-            {videoPath && <VideoResult videoPath={videoPath} />}
+            {videoPath && <VideoResult videoPath={videoPath} scriptPath={scriptPath} />}
           </div>
           
           <div className="lg:col-span-1">

@@ -41,4 +41,23 @@ export const getVideoData = async (videoPath) => {
     console.error('Error fetching video:', error);
     throw error.response?.data?.detail || error.message || 'Failed to get video data';
   }
+};
+
+export const getScriptData = async (scriptPath) => {
+  try {
+    const fullPath = scriptPath.startsWith('http') 
+      ? scriptPath 
+      : `${API_URL}/${scriptPath.replace(/^\//, '')}`;
+      
+    console.log(`Fetching script from: ${fullPath}`);
+    
+    const response = await axios.get(fullPath, {
+      responseType: 'text',
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching script:', error);
+    throw error.response?.data?.detail || error.message || 'Failed to get script data';
+  }
 }; 

@@ -6,6 +6,7 @@ An intelligent system that converts natural language prompts into beautiful 2D a
 
 - Natural language prompt processing
 - Automatic Manim animation code generation with Claude or Groq
+- Script viewing and downloading for learning and customization
 - Video rendering and delivery
 - Educational and conceptual visualization support
 - Modern Next.js frontend with a clean, responsive UI
@@ -33,7 +34,7 @@ After setup is complete, start the application:
 npm start
 ```
 
-This will start both the backend server at http://localhost:8002 and the frontend at http://localhost:3000.
+This will start both the backend server at http://localhost:8000 and the frontend at http://localhost:3000.
 
 ## 📦 Production Deployment
 
@@ -86,16 +87,29 @@ Open your browser to `http://localhost:3000` to access the modern UI.
 2. Select your preferred LLM (Claude or Groq)
 3. Click "Generate Animation"
 4. View and download your animation
+5. View and download the generated Manim script to learn or modify
 
 ### Via API
 
 Send a POST request to `/generate` with your prompt:
 
 ```bash
-curl -X POST http://localhost:8002/generate \
+curl -X POST http://localhost:8000/generate \
   -H "Content-Type: application/json" \
   -d '{"prompt": "Visualize the Pythagorean theorem with animated squares and triangles", "model": "claude"}'
 ```
+
+The response will include paths to both the video and the generated script:
+
+```json
+{
+  "video_path": "/outputs/video_id",
+  "script_path": "/scripts/script_id",
+  "message": "Video and script generated successfully!"
+}
+```
+
+You can access the generated script via the `/scripts/{script_id}` endpoint.
 
 ## 🔍 Troubleshooting
 
@@ -108,9 +122,9 @@ If you see a "Connection Refused" error:
 python3 backend/main.py
 ```
 
-2. Check if the port 8002 is in use by another application:
+2. Check if the port 8000 is in use by another application:
 ```bash
-lsof -i :8002
+lsof -i :8000
 ```
 
 3. Verify your `.env` file has the required API keys:

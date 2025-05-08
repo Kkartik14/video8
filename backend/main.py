@@ -1,7 +1,7 @@
 import os
 import sys
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -40,6 +40,7 @@ class PromptRequest(BaseModel):
 
 class GenerationResponse(BaseModel):
     video_path: str
+    script_path: str
     message: str
 
 @app.post("/generate", response_model=GenerationResponse)
@@ -59,6 +60,16 @@ async def generate_video(request: PromptRequest):
         # Generate Manim code from prompt
         manim_code = llm_handler.generate_manim_code(request.prompt)
         
+        # Save the script to a file
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(base_dir)
+        scripts_dir = os.path.join(parent_dir, "outputs", "scripts")
+        os.makedirs(scripts_dir, exist_ok=True)
+        
+        script_path = os.path.join(scripts_dir, f"{generation_id}.py")
+        with open(script_path, "w") as f:
+            f.write(manim_code)
+        
         # Create temporary directory for video output
         with tempfile.TemporaryDirectory() as temp_dir:
             # Generate and render the video
@@ -68,10 +79,11 @@ async def generate_video(request: PromptRequest):
                 generation_id=generation_id
             )
             
-            # Return the video_id which will be used to construct the URL
+            # Return the video_id and script_id which will be used to construct the URLs
             return GenerationResponse(
                 video_path=f"/outputs/{video_id}",
-                message="Video generated successfully!"
+                script_path=f"/scripts/{generation_id}",
+                message="Video and script generated successfully!"
             )
             
     except Exception as e:
@@ -100,6 +112,23 @@ async def get_video(video_id: str):
     # If we got here, we couldn't find the video
     raise HTTPException(status_code=404, detail=f"Video not found. Tried locations: {possible_locations}")
 
+@app.get("/scripts/{script_id}", response_class=PlainTextResponse)
+async def get_script(script_id: str):
+    # Get the base directory and parent directory
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(base_dir)
+    
+    # Get the script path
+    script_path = os.path.join(parent_dir, "outputs", "scripts", f"{script_id}.py")
+    
+    if os.path.exists(script_path):
+        with open(script_path, "r") as f:
+            script_content = f.read()
+        return script_content
+    
+    # If we got here, we couldn't find the script
+    raise HTTPException(status_code=404, detail=f"Script not found at {script_path}")
+
 # Keep the old route for compatibility
 @app.get("/video/{video_id}")
 async def get_video_old(video_id: str):
@@ -113,4 +142,9 @@ if __name__ == "__main__":
     parent_dir = os.path.dirname(base_dir)
     outputs_dir = os.path.join(parent_dir, "outputs")
     os.makedirs(outputs_dir, exist_ok=True)
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    
+    # Create scripts directory within outputs
+    scripts_dir = os.path.join(outputs_dir, "scripts")
+    os.makedirs(scripts_dir, exist_ok=True)
+    
+    uvicorn.run(app, host="0.0.0.0", port=8002) 
