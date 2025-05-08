@@ -198,4 +198,24 @@ To use the Streamlit version instead of Next.js, run:
 
 ```bash
 streamlit run app.py
-``` 
+```
+
+## 🧹 Cleaning Up
+
+To remove unnecessary files and clean up generated content, use the provided cleanup script:
+
+```bash
+# Make the script executable if needed
+chmod +x cleanup.sh
+
+# Run the cleanup script
+./cleanup.sh
+```
+
+This script removes:
+- Redundant duplicate Python files in the root directory
+- Python cache files (__pycache__ directories)
+- Test media files
+- Generated temporary output files
+
+The script preserves the necessary directory structure while removing unnecessary content 
