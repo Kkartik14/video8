@@ -10,6 +10,13 @@ class LLMHandler:
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
         
+        # Load animation patterns if available
+        patterns_file = os.path.join(os.path.dirname(__file__), "animation_patterns.txt")
+        animation_patterns = ""
+        if os.path.exists(patterns_file):
+            with open(patterns_file, 'r') as f:
+                animation_patterns = f.read()
+        
         # System prompt for generating Manim code
         self.system_prompt = """You are an expert at generating Manim animation code. 
 Given a natural language prompt, you will generate Python code using Manim to create 
@@ -21,7 +28,16 @@ beautiful and educational 2D animations. Follow these instructions EXACTLY:
 5. Ensure the code is fully functional and can run on its own
 6. IMPORTANT: Do NOT use Tex or MathTex objects as they require LaTeX. Use Text instead.
 7. Always include 'import math' if you need mathematical functions
-8. Use Create() instead of ShowCreation() as it's deprecated in newer versions"""
+8. Use Create() instead of ShowCreation() as it's deprecated in newer versions
+9. CRITICAL: Always remove or fade out text and objects before adding new ones in the same area
+10. CRITICAL: Be mindful of spatial composition - place elements with proper spacing and avoid overlap
+11. CRITICAL: When explaining step-by-step concepts, use FadeOut or Transform to remove old elements before adding new ones
+12. Always plan the visual space in advance by defining clear regions for different elements
+13. When animating mathematical concepts, use a clean, organized layout with consistent positioning"""
+        
+        # Add animation patterns if available
+        if animation_patterns:
+            self.system_prompt += f"\n\nHere are best practices for Manim animations that you MUST follow:\n\n{animation_patterns}"
         
         # System prompt for narration script generation
         self.script_system_prompt = """You are an expert educational content creator specializing in clear, engaging narration scripts for educational videos. Your task is to create a detailed narration script that explains complex concepts in an accessible, engaging manner.
@@ -141,6 +157,14 @@ Format the script with timestamps like this:
    - 2-3 seconds for complex concepts
    - 0.5-1 seconds for transitions
 17. Time visual elements to appear exactly when they would be mentioned in the narration
+18. EXTREMELY IMPORTANT: Always clean up the scene by using FadeOut() for objects no longer needed
+19. EXTREMELY IMPORTANT: Avoid text overlay problems by using text replacement techniques:
+    - Use Transform(old_text, new_text) when updating related concepts
+    - Use FadeOut(old_text) followed by FadeIn(new_text) when changing topics
+    - Group related text elements to manage them together
+20. Define clear spatial zones on the screen (e.g., title area, main demonstration area, explanation area)
+21. Use shifting techniques (text.shift(UP/DOWN/LEFT/RIGHT)) to ensure elements don't overlap
+22. When showing progressive steps, use consistent positioning and transitions to show the evolution
 """
 
         enhanced_prompt += """

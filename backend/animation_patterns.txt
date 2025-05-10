@@ -1,0 +1,157 @@
+### Manim Animation Best Practices
+
+## 1. Text Management
+
+Good:
+- Always remove old text before adding new text in the same area
+- Use Transform(old_text, new_text) when updating information on the same topic
+- Use FadeOut(old_text) followed by FadeIn(new_text) when changing topics
+- Group related text elements with VGroup for easier management
+- Position text in well-defined screen regions
+
+Bad:
+- Creating new text objects without removing old ones
+- Allowing text to overlay on top of other text
+- Hard-coding absolute positions for text without considering other elements
+- Leaving unused text objects on screen
+
+## 2. Screen Layout and Spatial Organization
+
+Good:
+- Define clear regions at the beginning of the animation
+  ```python
+  title_region = UP * 3.5
+  main_region = ORIGIN
+  explanation_region = DOWN * 3
+  ```
+- Position objects relative to these regions
+  ```python
+  title = Text("My Title").move_to(title_region)
+  main_object = Circle().move_to(main_region)
+  explanation = Text("Explanation").move_to(explanation_region)
+  ```
+- Use LEFT, RIGHT, UP, DOWN for positioning
+- Use next_to() to position elements relative to each other
+  ```python
+  equation = Text("E = mc^2").move_to(main_region)
+  explanation = Text("Energy-mass equivalence").next_to(equation, DOWN)
+  ```
+
+Bad:
+- Using absolute coordinates without considering screen layout
+- Placing elements without regard to other elements
+- Overcrowding the screen with too many elements
+
+## 3. Object Cleanup
+
+Good:
+- Remove objects when they're no longer needed
+  ```python
+  self.play(FadeOut(old_object))
+  ```
+- Clean up multiple objects at once using VGroup
+  ```python
+  self.play(FadeOut(VGroup(object1, object2, object3)))
+  ```
+- Always clean up at the end of the animation
+
+Bad:
+- Leaving unused objects on screen
+- Creating new objects in the same position without removing old ones
+- Not cleaning up at the end of the animation
+
+## 4. Animation Pacing
+
+Good:
+- Use appropriate wait times based on content complexity
+  ```python
+  self.wait(1)  # Short pause for simple point
+  self.wait(2.5)  # Longer pause for complex concept
+  ```
+- Match timing to narration script
+- Use shorter run_time for simpler animations, longer for complex ones
+  ```python
+  self.play(Write(simple_text), run_time=1)
+  self.play(Create(complex_shape), run_time=2)
+  ```
+
+Bad:
+- Using the same wait time for everything
+- Animations that move too quickly to follow
+- Not giving viewers enough time to process complex information
+
+## 5. Progressive Animations
+
+Good:
+- Show step-by-step processes with clear transitions
+- Use Transform to show evolution of objects
+  ```python
+  self.play(Transform(equation1, equation2))
+  ```
+- Highlight changes with color or effects
+  ```python
+  self.play(equation.animate.set_color(YELLOW))
+  ```
+
+Bad:
+- Showing all steps at once
+- Not clearly indicating what changes between steps
+- Jumping between concepts without transitions
+
+## 6. Example: Good Animation Structure
+
+```python
+def construct(self):
+    # 1. Define regions
+    title_region = UP * 3.5
+    main_region = ORIGIN
+    explanation_region = DOWN * 3
+    
+    # 2. Introduction
+    title = Text("Title", color=BLUE).move_to(title_region)
+    self.play(Write(title))
+    self.wait(1)
+    
+    # 3. First concept
+    text1 = Text("First concept").move_to(explanation_region)
+    self.play(Write(text1))
+    
+    circle = Circle(color=RED).move_to(main_region)
+    self.play(Create(circle))
+    self.wait(2)
+    
+    # 4. Second concept (update text, replace object)
+    text2 = Text("Second concept").move_to(explanation_region)
+    self.play(Transform(text1, text2))  # Update text
+    
+    self.play(FadeOut(circle))  # Remove old object
+    square = Square(color=GREEN).move_to(main_region)
+    self.play(Create(square))
+    self.wait(2)
+    
+    # 5. Clean up at the end
+    self.play(
+        FadeOut(title),
+        FadeOut(text1),  # This removes the current text
+        FadeOut(square)
+    )
+    self.wait(1)
+```
+
+## 7. Object Persistence and Memory
+
+Good:
+- Keep track of object references when transforming
+  ```python
+  # text1 reference now points to what visually appears as text2
+  self.play(Transform(text1, text2))
+  
+  # Later, to remove it:
+  self.play(FadeOut(text1))  # Removes what appears as text2
+  ```
+- Use clear variable names that indicate object purpose
+
+Bad:
+- Losing track of transformed objects
+- Using the same variable name for different objects
+- Not understanding that Transform keeps the original object reference 

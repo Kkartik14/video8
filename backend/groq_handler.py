@@ -9,6 +9,13 @@ class GroqHandler:
         if not self.api_key:
             raise ValueError("GROQ_API_KEY environment variable is not set")
         
+        # Load animation patterns if available
+        patterns_file = os.path.join(os.path.dirname(__file__), "animation_patterns.txt")
+        animation_patterns = ""
+        if os.path.exists(patterns_file):
+            with open(patterns_file, 'r') as f:
+                animation_patterns = f.read()
+        
         # System prompt for script generation
         self.script_system_prompt = """You are an expert educational content creator specializing in clear, engaging narration scripts for educational videos. Your task is to create a detailed narration script that explains complex concepts in an accessible, engaging manner.
 
@@ -54,6 +61,10 @@ REQUIREMENTS (EXTREMELY IMPORTANT):
 16. Use background grids, axes, or reference frames where appropriate
 17. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
 18. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
+19. CRITICAL: Always remove or fade out text and objects before adding new ones in the same area
+20. CRITICAL: Never leave old objects on screen when they're no longer relevant
+21. CRITICAL: Use spatial planning - define clear regions (title, main content, explanation)
+22. CRITICAL: When explaining step-by-step, use transforms to show progression clearly 
 
 TECHNICAL REQUIREMENTS:
 - Start with 'from manim import *'
@@ -64,8 +75,16 @@ TECHNICAL REQUIREMENTS:
 - Make animations match the script length (typically 2-3 minutes)
 - Pay special attention to timing - allow time for narration of each concept
 - Never include triple backticks (```) or other markdown syntax anywhere in the code
+- Always use FadeOut() for any object before creating a new one in the same space
+- Use Transform() to show evolution of concepts instead of creating new elements
+- Always group related objects together (using VGroup) for easier management
+- Use consistent positioning with UP, DOWN, LEFT, RIGHT constants
 
-The key is to create an animation that perfectly complements the script, with visual elements appearing exactly when they would be mentioned in the narration."""
+The key is to create an animation that perfectly complements the script, with visual elements appearing exactly when they would be mentioned in the narration and disappearing when no longer needed."""
+        
+        # Add animation patterns if available
+        if animation_patterns:
+            self.animation_system_prompt += f"\n\nHere are detailed best practices for Manim animations that you MUST follow:\n\n{animation_patterns}"
         
     def generate_narration_script(self, prompt: str) -> str:
         """Generate a narration script for the animation based on the prompt"""
@@ -163,6 +182,16 @@ Requirements:
 11. IMPORTANT: Use Create() instead of ShowCreation() as it's deprecated
 12. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
 13. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
+14. CRITICALLY IMPORTANT: Always remove or fade out text and objects before adding new ones in the same space
+15. CRITICALLY IMPORTANT: Use Transform() to update text/objects rather than creating new ones and leaving old ones
+16. CRITICALLY IMPORTANT: Define clear spatial zones on the screen and maintain consistent positioning:
+    - title_region = UP * 3.5
+    - main_region = ORIGIN
+    - explanation_region = DOWN * 3
+17. Always group related objects with VGroup for easier management
+18. When explaining step-by-step processes, use transforms to show progressive changes
+19. Always use FadeOut() for objects that are no longer needed to keep the scene clean
+20. When showing multiple items, arrange them with proper spacing using arrange() or position them with UP/DOWN/LEFT/RIGHT
 
 If you can't create a specific animation for this prompt, do NOT use a generic template. Instead, create a targeted animation that addresses the prompt as specifically as possible.
 
@@ -173,6 +202,11 @@ import numpy as np
 
 class CustomAnimation(Scene):
     def construct(self):
+        # Define screen regions for better organization
+        title_region = UP * 3.5
+        main_region = ORIGIN
+        explanation_region = DOWN * 3 + LEFT * 3
+        
         # Your code here aligned with narration timestamps
 """
 

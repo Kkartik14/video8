@@ -5,11 +5,14 @@ from typing import Optional
 import glob
 import shutil
 import re
+import importlib.util
 
 class SceneGenerator:
     def __init__(self):
         self.quality = "medium_quality"
         self.preview = False
+        # Check if example animations are available
+        self.has_examples = os.path.exists(os.path.join(os.path.dirname(__file__), "example_animations.py"))
         
     def _fix_manim_code(self, code: str) -> str:
         """
@@ -52,6 +55,9 @@ class SceneGenerator:
         
         # Fix other common issues
         fixed_code = self._fix_common_syntax_errors(fixed_code)
+        
+        # Improve animation quality and fix text overlay issues
+        fixed_code = self._improve_animation_quality(fixed_code)
         
         return fixed_code
     
@@ -142,6 +148,12 @@ class SceneGenerator:
             print("--------------------------------------------------")
             print(fixed_code[:500] + "..." if len(fixed_code) > 500 else fixed_code)
             print("--------------------------------------------------\n")
+            
+            # If we have examples available, copy the example_animations.py to the output dir
+            # so it can be referenced by the scene
+            if self.has_examples:
+                example_file = os.path.join(os.path.dirname(__file__), "example_animations.py")
+                shutil.copy(example_file, output_dir)
             
             # Run Manim to generate the video
             command = [
@@ -386,4 +398,127 @@ class SceneGenerator:
             if os.path.exists(file_path):
                 os.remove(file_path)
         except Exception as e:
-            print(f"Warning: Could not clean up file {file_path}: {str(e)}") 
+            print(f"Warning: Could not clean up file {file_path}: {str(e)}")
+
+    def _improve_animation_quality(self, code: str) -> str:
+        """
+        Detect and fix common issues with animation clarity, text overlays, and object management.
+        """
+        # Check if we have multiple text objects without removal
+        lines = code.split('\n')
+        text_creations = []
+        text_removals = []
+        text_names = set()
+        section_comments = []
+        
+        # First pass - collect information
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Track section comments for better organization
+            if stripped.startswith('#') and len(stripped) > 2:
+                section_comments.append((i, stripped))
+            
+            # Track text object creations
+            text_creation_match = re.search(r'(\w+)\s*=\s*Text\(', stripped)
+            if text_creation_match:
+                text_name = text_creation_match.group(1)
+                text_names.add(text_name)
+                text_creations.append((i, text_name))
+            
+            # Track text object removals (FadeOut, Transform, etc.)
+            for name in text_names:
+                if f"FadeOut({name})" in stripped or f"Transform({name}" in stripped:
+                    text_removals.append((i, name))
+        
+        # Fix missing FadeOut for text objects
+        fixed_lines = lines.copy()
+        created_but_not_removed = []
+        
+        # Find text objects that were created but never removed
+        for i, text_name in text_creations:
+            # Check if this text was ever removed
+            if not any(name == text_name for _, name in text_removals):
+                created_but_not_removed.append((i, text_name))
+        
+        # Add FadeOut for text objects that weren't removed
+        if created_but_not_removed:
+            # Find the last wait call in the method to insert before it
+            last_wait_index = -1
+            for i, line in enumerate(reversed(lines)):
+                if "self.wait" in line.strip():
+                    last_wait_index = len(lines) - i - 1
+                    break
+            
+            # If no wait call found, find the end of the construct method
+            if last_wait_index == -1:
+                for i, line in enumerate(lines):
+                    if line.strip() == "def construct(self):":
+                        # Find the end of the method by indentation
+                        method_indent = len(line) - len(line.lstrip())
+                        for j in range(i+1, len(lines)):
+                            if lines[j].strip() and len(lines[j]) - len(lines[j].lstrip()) <= method_indent:
+                                last_wait_index = j - 1
+                                break
+                        if last_wait_index == -1:  # If we couldn't find the end, use the last line
+                            last_wait_index = len(lines) - 1
+                        break
+            
+            # If we found a place to insert, add FadeOut for all objects
+            if last_wait_index != -1:
+                # Create a list of text objects to fade out
+                text_objects = [name for _, name in created_but_not_removed]
+                if text_objects:
+                    # Add a comment explaining the fix
+                    fixed_lines.insert(last_wait_index, "        # Cleaning up text objects to avoid cluttering")
+                    
+                    # For multiple objects, use a group
+                    if len(text_objects) > 1:
+                        fade_out_line = f"        self.play(FadeOut(VGroup({', '.join(text_objects)})))"
+                    else:
+                        fade_out_line = f"        self.play(FadeOut({text_objects[0]}))"
+                    
+                    fixed_lines.insert(last_wait_index + 1, fade_out_line)
+        
+        # Check for missing spatial organization and add comments to help
+        if len(text_creations) > 3 and len(section_comments) < 2:
+            # Find the start of the construct method
+            for i, line in enumerate(fixed_lines):
+                if line.strip() == "def construct(self):":
+                    # Add a spatial organization tip
+                    fixed_lines.insert(i + 1, "        # Define screen regions for better organization")
+                    fixed_lines.insert(i + 2, "        title_region = UP * 3.5")
+                    fixed_lines.insert(i + 3, "        main_region = ORIGIN")
+                    fixed_lines.insert(i + 4, "        explanation_region = DOWN * 3 + LEFT * 3")
+                    break
+        
+        # Check if we need to add text replacement example
+        has_text_transform = any("Transform(" in line for line in fixed_lines)
+        if not has_text_transform and len(text_creations) > 2:
+            # Add a comment with an example of text transformation technique
+            for i, line in enumerate(fixed_lines):
+                if "Text(" in line:
+                    indent = len(line) - len(line.lstrip())
+                    # Add the comment after this text creation
+                    example = " " * indent + "# Example: To update this text use self.play(Transform(text1, text2))"
+                    fixed_lines.insert(i + 1, example)
+                    break
+        
+        # If we have examples available and there are still issues, add import for our example patterns
+        if self.has_examples and (len(created_but_not_removed) > 2 or (len(text_creations) > 3 and not has_text_transform)):
+            # Add a comment with references to example patterns
+            for i, line in enumerate(fixed_lines):
+                if line.strip().startswith('from manim import'):
+                    # Find the best example class to reference based on the issues
+                    if len(created_but_not_removed) > 2:
+                        example_class = "GoodTextManagement"
+                        comment = "# Refer to the GoodTextManagement example for proper text cleanup techniques"
+                    else:
+                        example_class = "ProgressiveSteps"
+                        comment = "# Refer to the ProgressiveSteps example for how to show sequential information"
+                    
+                    # Add comment and optional import
+                    fixed_lines.insert(i + 1, comment)
+                    break
+                    
+        return '\n'.join(fixed_lines) 
