@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { FaSpinner } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaSpinner, FaStar, FaLightbulb, FaMagic, FaBrain, FaRandom } from 'react-icons/fa';
 
 const PromptForm = ({ onSubmit, isLoading }) => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('claude');
+  const [characterCount, setCharacterCount] = useState(0);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    setCharacterCount(prompt.length);
+  }, [prompt]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -14,80 +20,131 @@ const PromptForm = ({ onSubmit, isLoading }) => {
 
   const handleExamplePrompt = (examplePrompt) => {
     setPrompt(examplePrompt);
+    setShowSuggestions(false);
+  };
+
+  const handleRandomExample = () => {
+    const randomIndex = Math.floor(Math.random() * examples.length);
+    setPrompt(examples[randomIndex]);
+    setShowSuggestions(false);
   };
 
   const examples = [
-    "Visualize the Pythagorean theorem with animated squares and triangles",
-    "Show how binary search works with an array of numbers",
-    "Demonstrate the concept of gravitational force between two objects",
-    "Illustrate the quadratic formula solving process",
-    "Visualize sorting algorithms like bubble sort and quick sort"
+    "Visualize the Pythagorean theorem with animated squares on the sides of a right triangle",
+    "Show how binary search works with an array of numbers using step-by-step animation",
+    "Demonstrate the concept of gravitational force between two objects with varying masses",
+    "Illustrate the quadratic formula solving process with step-by-step animations",
+    "Visualize sorting algorithms like bubble sort and quick sort with animated arrays",
+    "Show wave interference patterns when two waves combine in a medium",
+    "Demonstrate how derivatives represent the slope of a function at a point",
+    "Visualize the double-slit experiment in quantum mechanics",
+    "Illustrate the concept of electric fields around positive and negative charges"
   ];
 
   return (
-    <div className="bg-white shadow rounded-lg p-6 mb-6">
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-1">
-            Enter your animation prompt:
-          </label>
-          <textarea
-            id="prompt"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Example: Visualize the Pythagorean theorem with animated squares and triangles"
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-            required
-          />
-        </div>
-        
-        <div className="mb-4">
-          <label htmlFor="model" className="block text-sm font-medium text-gray-700 mb-1">
-            Choose LLM model:
-          </label>
-          <select
-            id="model"
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-          >
-            <option value="claude">Claude</option>
-            <option value="groq">Groq</option>
-          </select>
-        </div>
-        
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:bg-blue-300"
-        >
-          {isLoading ? (
-            <>
-              <FaSpinner className="animate-spin mr-2" />
-              Generating Animation...
-            </>
-          ) : (
-            'Generate Animation'
-          )}
-        </button>
-      </form>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Example Prompts</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {examples.map((example, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => handleExamplePrompt(example)}
-              className="text-left text-sm text-gray-700 hover:text-primary bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-md"
+    <div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="relative">
+          <div className="flex items-center mb-2">
+            <FaMagic className="text-primary dark:text-blue-400 mr-2" />
+            <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              What would you like to visualize?
+            </label>
+            <button 
+              type="button" 
+              onClick={() => setShowSuggestions(!showSuggestions)}
+              className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 focus:outline-none transition-colors"
             >
-              {example}
+              <FaLightbulb className="mr-1" /> Need ideas?
             </button>
-          ))}
+          </div>
+
+          <div className="relative">
+            <textarea
+              id="prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Example: Visualize the Pythagorean theorem with animated squares and triangles"
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-dark-100 dark:text-white transition-all duration-200"
+              required
+            />
+            
+            <div className="absolute bottom-3 right-3 text-xs text-gray-500 dark:text-gray-400">
+              {characterCount} characters
+            </div>
+          </div>
         </div>
-      </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="model" className="flex items-center mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <FaBrain className="text-purple-500 mr-2" />
+              Choose LLM model:
+            </label>
+            <select
+              id="model"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-dark-100 dark:text-white transition-all duration-200"
+            >
+              <option value="claude">Claude (more creative)</option>
+              <option value="groq">Groq (faster)</option>
+            </select>
+          </div>
+          
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary to-accent hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {isLoading ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Generating Animation...
+                </>
+              ) : (
+                <>
+                  <FaStar className="mr-2" />
+                  Generate Animation
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+      
+      {showSuggestions && (
+        <div className="mt-6 bg-gray-50 dark:bg-dark-200/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 animate-fade-in">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+              <FaLightbulb className="text-yellow-400 mr-2" />
+              Example Prompts
+            </h3>
+            <button
+              type="button"
+              onClick={handleRandomExample}
+              className="inline-flex items-center px-3 py-1 text-sm font-medium rounded-md bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 focus:outline-none transition-colors"
+            >
+              <FaRandom className="mr-1" />
+              Random Example
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {examples.map((example, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleExamplePrompt(example)}
+                className="text-left text-sm text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary bg-white dark:bg-dark-100 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-3 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
