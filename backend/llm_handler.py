@@ -17,10 +17,11 @@ beautiful and educational 2D animations. Follow these instructions EXACTLY:
 1. ONLY return Python code with no explanations or additional text before or after
 2. Do not include markdown code blocks or any other formatting
 3. Do not include any statements like 'Here's the code', just start directly with the imports
-4. Ensure the code is fully functional and can run on its own
-5. IMPORTANT: Do NOT use Tex or MathTex objects as they require LaTeX. Use Text instead.
-6. Always include 'import math' if you need mathematical functions
-7. Use Create() instead of ShowCreation() as it's deprecated in newer versions"""
+4. Do not include triple backticks (```) in your response anywhere
+5. Ensure the code is fully functional and can run on its own
+6. IMPORTANT: Do NOT use Tex or MathTex objects as they require LaTeX. Use Text instead.
+7. Always include 'import math' if you need mathematical functions
+8. Use Create() instead of ShowCreation() as it's deprecated in newer versions"""
         
         # System prompt for narration script generation
         self.script_system_prompt = """You are an expert educational content creator specializing in clear, engaging narration scripts for educational videos. Your task is to create a detailed narration script that explains complex concepts in an accessible, engaging manner.
@@ -127,16 +128,19 @@ Format the script with timestamps like this:
 10. IMPORTANT: Do NOT include any self.wait() or other self references outside of the construct method
 11. IMPORTANT: All code that references 'self' MUST be properly indented inside the construct method
 12. Include a final self.wait(2) at the end of the construct method to allow viewing the final state
+13. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
+14. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
+
 """
 
         # Add narration-specific requirements if a script is provided
         if narration_script:
-            enhanced_prompt += """13. EXTREMELY IMPORTANT: Ensure the animations align with the timestamps and sections in the narration script provided
-14. Use appropriate self.wait() durations to match narration timing - typically:
+            enhanced_prompt += """15. EXTREMELY IMPORTANT: Ensure the animations align with the timestamps and sections in the narration script provided
+16. Use appropriate self.wait() durations to match narration timing - typically:
    - 1-2 seconds for short sentences
    - 2-3 seconds for complex concepts
    - 0.5-1 seconds for transitions
-15. Time visual elements to appear exactly when they would be mentioned in the narration
+17. Time visual elements to appear exactly when they would be mentioned in the narration
 """
 
         enhanced_prompt += """

@@ -52,6 +52,8 @@ REQUIREMENTS (EXTREMELY IMPORTANT):
 14. Design animations that would work well with voiceover narration
 15. Add camera movements and zooms when they enhance understanding
 16. Use background grids, axes, or reference frames where appropriate
+17. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
+18. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
 
 TECHNICAL REQUIREMENTS:
 - Start with 'from manim import *'
@@ -61,6 +63,7 @@ TECHNICAL REQUIREMENTS:
 - Name the main Scene class 'CustomAnimation'
 - Make animations match the script length (typically 2-3 minutes)
 - Pay special attention to timing - allow time for narration of each concept
+- Never include triple backticks (```) or other markdown syntax anywhere in the code
 
 The key is to create an animation that perfectly complements the script, with visual elements appearing exactly when they would be mentioned in the narration."""
         
@@ -158,6 +161,8 @@ Requirements:
 9. Add clear text labels that match key phrases from the script
 10. IMPORTANT: Do NOT use Tex or MathTex objects as they require LaTeX. Use Text instead.
 11. IMPORTANT: Use Create() instead of ShowCreation() as it's deprecated
+12. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
+13. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
 
 If you can't create a specific animation for this prompt, do NOT use a generic template. Instead, create a targeted animation that addresses the prompt as specifically as possible.
 
