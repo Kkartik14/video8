@@ -22,302 +22,120 @@ beautiful and educational 2D animations. Follow these instructions EXACTLY:
 6. Always include 'import math' if you need mathematical functions
 7. Use Create() instead of ShowCreation() as it's deprecated in newer versions"""
         
-        # Dictionary of pre-built templates for specific prompts
-        self.templates = {
-            "pythagorean": '''from manim import *
+        # General purpose template that can adapt to any prompt
+        self.universal_template = '''from manim import *
 import math
 import numpy as np
 
 class CustomAnimation(Scene):
+    """
+    A generic template for creating educational animations.
+    This template is designed to be flexible and adaptable to any educational concept.
+    """
     def construct(self):
-        # Create a right triangle
-        right_triangle = Polygon(
-            ORIGIN, 
-            RIGHT * 3, 
-            UP * 4, 
-            color=WHITE,
-            fill_opacity=0.2
-        )
-        
-        # Create squares on each side
-        side_a = 3  # base
-        side_b = 4  # height
-        side_c = 5  # hypotenuse (calculated using Pythagorean theorem)
-        
-        # Square on side a (base)
-        square_a = Square(side_length=side_a, color=RED, fill_opacity=0.5)
-        square_a.move_to(RIGHT * (side_a/2))
-        square_a.shift(DOWN * (side_a/2 + 0.5))
-        
-        # Square on side b (height)
-        square_b = Square(side_length=side_b, color=BLUE, fill_opacity=0.5)
-        square_b.move_to(RIGHT * 3 + UP * (side_b/2))
-        square_b.shift(RIGHT * (side_b/2 + 0.5))
-        
-        # Square on side c (hypotenuse)
-        square_c = Square(side_length=side_c, color=GREEN, fill_opacity=0.5)
-        square_c.rotate(math.atan2(4, 3))
-        square_c.move_to(RIGHT * 1.5 + UP * 2)
-        square_c.shift((UP + RIGHT) * (side_c/4))
-        
-        # Add labels
-        label_a = Text("a = 3", font_size=24).next_to(square_a, DOWN)
-        label_b = Text("b = 4", font_size=24).next_to(square_b, RIGHT)
-        label_c = Text("c = 5", font_size=24).next_to(square_c, UP + RIGHT)
-        
-        # Add area labels
-        area_a = Text("Area = 9", font_size=20, color=RED).move_to(square_a)
-        area_b = Text("Area = 16", font_size=20, color=BLUE).move_to(square_b)
-        area_c = Text("Area = 25", font_size=20, color=GREEN).move_to(square_c)
-        
-        # Add formula
-        formula = Text("a² + b² = c²", font_size=36).to_edge(UP)
-        formula_values = Text("3² + 4² = 5²", font_size=30).next_to(formula, DOWN)
-        formula_result = Text("9 + 16 = 25", font_size=30).next_to(formula_values, DOWN)
-        
-        # Animations
-        self.play(Create(right_triangle))
-        self.wait(0.5)
-        
-        self.play(Create(square_a), Write(label_a))
-        self.wait(0.3)
-        
-        self.play(Create(square_b), Write(label_b))
-        self.wait(0.3)
-        
-        self.play(Create(square_c), Write(label_c))
-        self.wait(0.5)
-        
-        self.play(Write(area_a))
-        self.play(Write(area_b))
-        self.play(Write(area_c))
-        self.wait(0.5)
-        
-        self.play(Write(formula))
-        self.wait(0.3)
-        
-        self.play(Write(formula_values))
-        self.wait(0.3)
-        
-        self.play(Write(formula_result))
-        self.wait(1)
-        
-        self.play(
-            Indicate(area_a),
-            Indicate(area_b),
-            run_time=1
-        )
-        self.wait(0.3)
-        
-        self.play(Indicate(area_c), run_time=1)
-        self.wait(1)
-''',
-            "binary_search": '''from manim import *
-import math
-import numpy as np
-
-class CustomAnimation(Scene):
-    def construct(self):
-        # Title
-        title = Text("Binary Search", font_size=48)
+        # Title section
+        title = Text("Educational Animation", font_size=40)
         self.play(Write(title))
         self.wait(1)
-        self.play(title.animate.scale(0.8).to_edge(UP))
+        self.play(title.animate.scale(0.7).to_edge(UP))
+        self.wait(0.5)
         
-        # Create a sorted array
-        array = [1, 3, 5, 7, 9, 11, 13, 15, 17]
-        target = 11
+        # Introduction section
+        intro_text = Text("This animation explains an educational concept", font_size=28)
+        intro_text.next_to(title, DOWN, buff=0.5)
+        self.play(Write(intro_text))
+        self.wait(1)
+        self.play(FadeOut(intro_text))
         
-        # Visual representation of array
-        squares = []
-        labels = []
+        # Main content area - center of the screen
+        main_area = Rectangle(height=5, width=8, color=BLUE_E)
+        main_area.set_fill(BLUE_E, opacity=0.1)
+        self.play(Create(main_area))
         
-        # Create squares and labels for each element
-        for i, num in enumerate(array):
-            square = Square(side_length=1)
-            square.set_stroke(WHITE, 2)
-            square.set_fill(BLUE, opacity=0.5)
-            
-            label = Text(str(num), font_size=36)
-            
-            squares.append(square)
-            labels.append(label)
-        
-        # Arrange squares in a line
-        squares_group = VGroup(*squares).arrange(RIGHT, buff=0.1)
-        squares_group.move_to(ORIGIN)
-        
-        # Position labels in squares
-        for i, (square, label) in enumerate(zip(squares, labels)):
-            label.move_to(square.get_center())
-        
-        # Show array
-        array_label = Text("Sorted Array:", font_size=36).next_to(squares_group, UP * 2)
-        self.play(Write(array_label))
-        self.play(
-            *[Create(square) for square in squares],
-            *[Write(label) for label in labels],
-            run_time=2
-        )
+        # Placeholder for main content
+        main_content = Text("Main educational content will appear here", font_size=24)
+        main_content.move_to(main_area.get_center())
+        self.play(Write(main_content))
         self.wait(1)
         
-        # Target value
-        target_text = Text(f"Target: {target}", font_size=36).next_to(array_label, RIGHT * 4)
-        self.play(Write(target_text))
-        self.wait(1)
+        # Interactive element example
+        self.play(FadeOut(main_content))
         
-        # Initialize pointers
-        low, high = 0, len(array) - 1
-        
-        # Create pointer labels
-        low_label = Text("Low", font_size=24, color=GREEN).next_to(squares[low], DOWN)
-        high_label = Text("High", font_size=24, color=RED).next_to(squares[high], DOWN)
-        mid_label = None
-        
-        self.play(
-            Write(low_label),
-            Write(high_label)
-        )
-        self.wait(1)
-        
-        # Binary search iterations
-        iteration = 1
-        found = False
-        
-        while low <= high and not found:
-            # Calculate middle index
-            mid = (low + high) // 2
-            
-            # Create or move mid pointer
-            if mid_label:
-                self.play(
-                    mid_label.animate.next_to(squares[mid], DOWN)
-                )
-            else:
-                mid_label = Text("Mid", font_size=24, color=YELLOW).next_to(squares[mid], DOWN)
-                self.play(Write(mid_label))
-            
-            # Highlight current element being compared
-            self.play(
-                squares[mid].animate.set_fill(YELLOW, opacity=0.8),
-                labels[mid].animate.set_color(BLACK)
-            )
-            
-            # Show iteration
-            iteration_text = Text(f"Iteration {iteration}", font_size=36).to_edge(LEFT+UP)
-            comparison_text = Text(f"Comparing {array[mid]} with target {target}", font_size=28).next_to(iteration_text, DOWN)
-            
-            self.play(
-                Write(iteration_text),
-                Write(comparison_text)
-            )
-            self.wait(1)
-            
-            # Check if element is found
-            if array[mid] == target:
-                self.play(
-                    squares[mid].animate.set_fill(GREEN, opacity=0.8),
-                    FadeOut(comparison_text)
-                )
-                result_text = Text(f"Found {target} at index {mid}!", font_size=32, color=GREEN).next_to(iteration_text, DOWN)
-                self.play(Write(result_text))
-                found = True
-            elif array[mid] < target:
-                self.play(
-                    squares[mid].animate.set_fill(BLUE, opacity=0.5),
-                    labels[mid].animate.set_color(WHITE),
-                    FadeOut(comparison_text)
-                )
-                
-                # Update low pointer
-                low = mid + 1
-                self.play(
-                    low_label.animate.next_to(squares[low], DOWN),
-                    squares[low-1:mid+1].animate.set_fill(GREY, opacity=0.2),
-                    *[label.animate.set_color(GREY) for label in labels[low-1:mid+1]]
-                )
-                
-                update_text = Text(f"{array[mid]} < {target}, so search right half", font_size=28).next_to(iteration_text, DOWN)
-                self.play(Write(update_text))
-                self.wait(1)
-                self.play(FadeOut(update_text))
-            else:
-                self.play(
-                    squares[mid].animate.set_fill(BLUE, opacity=0.5),
-                    labels[mid].animate.set_color(WHITE),
-                    FadeOut(comparison_text)
-                )
-                
-                # Update high pointer
-                high = mid - 1
-                self.play(
-                    high_label.animate.next_to(squares[high], DOWN) if high >= 0 else high_label.animate.shift(LEFT * 3),
-                    squares[mid:high+2].animate.set_fill(GREY, opacity=0.2) if high >= 0 else squares[mid:].animate.set_fill(GREY, opacity=0.2),
-                    *[label.animate.set_color(GREY) for label in labels[mid:high+2]] if high >= 0 else [label.animate.set_color(GREY) for label in labels[mid:]]
-                )
-                
-                update_text = Text(f"{array[mid]} > {target}, so search left half", font_size=28).next_to(iteration_text, DOWN)
-                self.play(Write(update_text))
-                self.wait(1)
-                self.play(FadeOut(update_text))
-            
-            self.play(FadeOut(iteration_text))
-            iteration += 1
-            
-            # Break if we don't find it after reasonable iterations
-            if iteration > 5:
-                break
-                
-        if not found:
-            not_found_text = Text(f"Target {target} not found in array!", font_size=32, color=RED).to_edge(DOWN)
-            self.play(Write(not_found_text))
-        
-        self.wait(2)
-'''
-        }
-        
-        # Default template for other prompts
-        self.default_template = '''from manim import *
-import math
-import numpy as np
-
-class CustomAnimation(Scene):
-    def construct(self):
-        # Title
-        title = Text("Animation", font_size=40)
-        self.play(Write(title))
-        self.wait(1)
-        self.play(FadeOut(title))
-        
-        # Create a simple object
-        circle = Circle(radius=2, color=BLUE)
+        # Create an example visualization - can be adapted to any concept
+        circle = Circle(radius=1.5, color=BLUE)
+        circle.move_to(main_area.get_center())
         self.play(Create(circle))
-        self.wait(1)
         
-        # Transform to another shape
-        square = Square(side_length=4, color=RED)
+        # Add labels or information points around the visualization
+        info_points = []
+        labels = ["Point 1", "Point 2", "Point 3", "Point 4"]
+        
+        for i, label_text in enumerate(labels):
+            angle = i * PI/2  # Evenly space around the circle
+            point_pos = circle.get_center() + 2 * np.array([np.cos(angle), np.sin(angle), 0])
+            
+            dot = Dot(point_pos, color=YELLOW)
+            label = Text(label_text, font_size=18).next_to(dot, direction=point_pos - circle.get_center(), buff=0.2)
+            
+            info_points.append(VGroup(dot, label))
+            
+        for point in info_points:
+            self.play(Create(point[0]), Write(point[1]))
+            self.wait(0.3)
+        
+        # Transform to another shape to show concept evolution
+        square = Square(side_length=3, color=GREEN)
+        square.move_to(circle.get_center())
         self.play(Transform(circle, square))
         self.wait(1)
         
-        # Add some text
-        text = Text("Simple Animation", font_size=30)
-        text.next_to(square, DOWN)
-        self.play(Write(text))
+        # Example of showing a relationship or connection
+        arrow = Arrow(start=info_points[0][0].get_center(), end=info_points[2][0].get_center(), color=RED)
+        relation_text = Text("Relationship", font_size=20).next_to(arrow, RIGHT)
+        self.play(Create(arrow), Write(relation_text))
+        self.wait(1)
+        
+        # Cleanup for summary
+        self.play(
+            *[FadeOut(point) for point in info_points],
+            FadeOut(arrow),
+            FadeOut(relation_text),
+            FadeOut(circle)  # This is now the square due to transform
+        )
+        
+        # Summary section
+        summary_title = Text("Summary", font_size=36)
+        summary_title.move_to(main_area.get_center() + UP * 1.5)
+        
+        summary_points = VGroup(
+            Text("• Key point 1", font_size=24),
+            Text("• Key point 2", font_size=24),
+            Text("• Key point 3", font_size=24)
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+        summary_points.next_to(summary_title, DOWN, buff=0.5)
+        
+        self.play(Write(summary_title))
+        for point in summary_points:
+            self.play(Write(point))
+            self.wait(0.3)
+        
+        self.wait(1)
+        
+        # Final cleanup
+        self.play(
+            FadeOut(summary_title),
+            FadeOut(summary_points),
+            FadeOut(main_area)
+        )
+        
+        # End card
+        end_text = Text("Thank you for watching!", font_size=36)
+        self.play(Write(end_text))
         self.wait(2)
 '''
         
     def generate_manim_code(self, prompt: str) -> str:
-        # Check if prompt is about Pythagorean theorem
-        if any(keyword in prompt.lower() for keyword in ["pythagorean", "theorem", "square", "triangle"]):
-            print("Using pre-built Pythagorean theorem template")
-            return self.templates["pythagorean"]
-        
-        # Check if prompt is about binary search
-        if any(keyword in prompt.lower() for keyword in ["binary search", "sorted array", "searching algorithm"]):
-            print("Using pre-built binary search template")
-            return self.templates["binary_search"]
-            
-        # For other prompts, try to generate with Claude
+        # For all prompts, try to generate with Claude
         try:
             # Enhance the user prompt with specific requirements
             enhanced_prompt = f"""Create a Manim animation for the following prompt:
@@ -336,6 +154,8 @@ Requirements:
 10. IMPORTANT: Do NOT include any self.wait() or other self references outside of the construct method
 11. IMPORTANT: All code that references 'self' MUST be properly indented inside the construct method
 12. Include a final self.wait(2) at the end of the construct method to allow viewing the final state
+
+If you can't create a specific animation for this prompt, adapt the universal template to fit it.
 
 The code MUST start exactly like this:
 from manim import *
@@ -381,8 +201,8 @@ class CustomAnimation(Scene):
             
         except Exception as e:
             print(f"Error generating code with Claude: {str(e)}")
-            print("Falling back to default template")
-            return self.default_template
+            print("Falling back to universal template")
+            return self.universal_template
     
     def validate_and_fix_code(self, code: str) -> str:
         """Validate and fix common issues in the generated Manim code."""
@@ -392,8 +212,8 @@ class CustomAnimation(Scene):
             if start_idx != -1:
                 code = code[start_idx:]
             else:
-                print("Could not find Manim import statement, using default template")
-                return self.default_template
+                print("Could not find Manim import statement, using universal template")
+                return self.universal_template
                 
         # Replace deprecated methods
         code = code.replace("ShowCreation(", "Create(")
@@ -407,8 +227,8 @@ class CustomAnimation(Scene):
             
         # Check for LaTeX (which we don't want)
         if "MathTex(" in code or "Tex(" in code:
-            print("Found LaTeX objects in code, using default template instead")
-            return self.default_template
+            print("Found LaTeX objects in code, using universal template instead")
+            return self.universal_template
         
         # Check if all code is inside the class and method
         fixed_lines = []

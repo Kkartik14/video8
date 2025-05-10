@@ -11,6 +11,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [videoPath, setVideoPath] = useState(null);
   const [scriptPath, setScriptPath] = useState(null);
+  const [narrationScript, setNarrationScript] = useState(null);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (formData) => {
@@ -21,6 +22,7 @@ export default function Home() {
       const result = await generateVideo(formData.prompt, formData.model);
       setVideoPath(result.video_path);
       setScriptPath(result.script_path);
+      setNarrationScript(result.narration_script);
     } catch (err) {
       console.error("Error generating video:", err);
       
@@ -39,7 +41,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Head>
         <title>Prompt-to-2D-Video Generator</title>
-        <meta name="description" content="Generate 2D educational videos from natural language prompts" />
+        <meta name="description" content="Generate beautiful 2D animations from natural language prompts" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -79,7 +81,7 @@ export default function Home() {
               </div>
             )}
             
-            {videoPath && <VideoResult videoPath={videoPath} scriptPath={scriptPath} />}
+            {videoPath && <VideoResult videoPath={videoPath} scriptPath={scriptPath} narrationScript={narrationScript} />}
           </div>
           
           <div className="lg:col-span-1">

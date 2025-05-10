@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { FaDownload, FaCode } from 'react-icons/fa';
+import { FaDownload, FaCode, FaFileAlt } from 'react-icons/fa';
 import { getScriptData } from '../utils/api';
 
-const VideoResult = ({ videoPath, scriptPath }) => {
+const VideoResult = ({ videoPath, scriptPath, narrationScript }) => {
   const [script, setScript] = useState(null);
   const [showScript, setShowScript] = useState(false);
+  const [showNarrationScript, setShowNarrationScript] = useState(false);
   
   useEffect(() => {
     // Reset script state when new video is generated
     setScript(null);
     setShowScript(false);
-  }, [videoPath, scriptPath]);
+    setShowNarrationScript(false);
+  }, [videoPath, scriptPath, narrationScript]);
 
   if (!videoPath) return null;
 
@@ -27,6 +29,7 @@ const VideoResult = ({ videoPath, scriptPath }) => {
   console.log("Video path:", videoPath);
   console.log("Full video path:", fullVideoPath);
   console.log("Script path:", scriptPath);
+  console.log("Narration script available:", !!narrationScript);
 
   const handleDownload = () => {
     // Create an anchor element and trigger download
@@ -51,6 +54,19 @@ const VideoResult = ({ videoPath, scriptPath }) => {
     URL.revokeObjectURL(url);
   };
   
+  const handleDownloadNarration = () => {
+    // Create a Blob and trigger download
+    const blob = new Blob([narrationScript], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `narration_${scriptPath.split('/').pop()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+  
   const handleViewScript = async () => {
     if (!script && scriptPath) {
       try {
@@ -62,6 +78,10 @@ const VideoResult = ({ videoPath, scriptPath }) => {
     }
     
     setShowScript(!showScript);
+  };
+  
+  const handleViewNarration = () => {
+    setShowNarrationScript(!showNarrationScript);
   };
 
   return (
@@ -75,7 +95,7 @@ const VideoResult = ({ videoPath, scriptPath }) => {
         />
       </div>
       
-      <div className="flex space-x-4">
+      <div className="flex flex-wrap space-x-2 space-y-2 sm:space-y-0">
         <button
           onClick={handleDownload}
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
@@ -90,21 +110,51 @@ const VideoResult = ({ videoPath, scriptPath }) => {
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             <FaCode className="mr-2" />
-            {showScript ? 'Hide Script' : 'View Script'}
+            {showScript ? 'Hide Code' : 'View Code'}
+          </button>
+        )}
+        
+        {narrationScript && narrationScript !== "No narration script available for this model." && (
+          <button
+            onClick={handleViewNarration}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            <FaFileAlt className="mr-2" />
+            {showNarrationScript ? 'Hide Script' : 'View Narration Script'}
           </button>
         )}
       </div>
       
+      {showNarrationScript && narrationScript && (
+        <div className="mt-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium text-gray-900">Narration Script</h3>
+            <button
+              onClick={handleDownloadNarration}
+              className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            >
+              <FaDownload className="mr-1" />
+              Download Script
+            </button>
+          </div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 overflow-auto max-h-96">
+            {narrationScript.split('\n').map((line, index) => (
+              <p key={index} className="mb-2">{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
+      
       {showScript && script && (
         <div className="mt-4">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-medium text-gray-900">Animation Script</h3>
+            <h3 className="text-lg font-medium text-gray-900">Animation Code</h3>
             <button
               onClick={handleDownloadScript}
               className="inline-flex items-center px-3 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               <FaDownload className="mr-1" />
-              Download Script
+              Download Code
             </button>
           </div>
           <pre className="bg-gray-100 rounded-md p-4 overflow-auto max-h-96 text-sm">

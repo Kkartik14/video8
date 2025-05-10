@@ -41,6 +41,7 @@ class PromptRequest(BaseModel):
 class GenerationResponse(BaseModel):
     video_path: str
     script_path: str
+    narration_script: str
     message: str
 
 @app.post("/generate", response_model=GenerationResponse)
@@ -52,13 +53,14 @@ async def generate_video(request: PromptRequest):
         # Initialize handlers
         if request.model == "claude":
             llm_handler = LLMHandler()
+            narration_script = None
+            manim_code = llm_handler.generate_manim_code(request.prompt)
         else:
             llm_handler = GroqHandler()
+            narration_script = llm_handler.generate_narration_script(request.prompt)
+            manim_code = llm_handler.generate_manim_code(request.prompt)
             
         scene_generator = SceneGenerator()
-        
-        # Generate Manim code from prompt
-        manim_code = llm_handler.generate_manim_code(request.prompt)
         
         # Save the script to a file
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -69,6 +71,15 @@ async def generate_video(request: PromptRequest):
         script_path = os.path.join(scripts_dir, f"{generation_id}.py")
         with open(script_path, "w") as f:
             f.write(manim_code)
+        
+        # Save the narration script to a file if available
+        narration_path = None
+        if narration_script:
+            narration_dir = os.path.join(parent_dir, "outputs", "narrations")
+            os.makedirs(narration_dir, exist_ok=True)
+            narration_path = os.path.join(narration_dir, f"{generation_id}.txt")
+            with open(narration_path, "w") as f:
+                f.write(narration_script)
         
         # Create temporary directory for video output
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -83,6 +94,7 @@ async def generate_video(request: PromptRequest):
             return GenerationResponse(
                 video_path=f"/outputs/{video_id}",
                 script_path=f"/scripts/{generation_id}",
+                narration_script=narration_script or "No narration script available for this model.",
                 message="Video and script generated successfully!"
             )
             
@@ -128,6 +140,28 @@ async def get_script(script_id: str):
     
     # If we got here, we couldn't find the script
     raise HTTPException(status_code=404, detail=f"Script not found at {script_path}")
+
+@app.get("/narrations/{script_id}", response_class=PlainTextResponse)
+async def get_narration(script_id: str):
+    # Get the base directory and parent directory
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(base_dir)
+    
+    # Get the narration script path
+    narration_path = os.path.join(parent_dir, "outputs", "narrations", f"{script_id}.txt")
+    
+    if os.path.exists(narration_path):
+        with open(narration_path, "r") as f:
+            narration_content = f.read()
+        return narration_content
+    
+    # If we got here, we couldn't find the narration script
+    raise HTTPException(status_code=404, detail=f"Narration script not found at {narration_path}")
+
+# Health check endpoint
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "message": "Service is running"}
 
 # Keep the old route for compatibility
 @app.get("/video/{video_id}")
