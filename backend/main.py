@@ -147,4 +147,4 @@ if __name__ == "__main__":
     scripts_dir = os.path.join(outputs_dir, "scripts")
     os.makedirs(scripts_dir, exist_ok=True)
     
-    uvicorn.run(app, host="0.0.0.0", port=8002) 
+    uvicorn.run(app, host="0.0.0.0", port=8000) 

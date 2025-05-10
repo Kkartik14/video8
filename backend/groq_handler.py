@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Dict, Any
-from groq import Groq
+import requests
 
 class GroqHandler:
     def __init__(self):
@@ -9,19 +9,39 @@ class GroqHandler:
         if not self.api_key:
             raise ValueError("GROQ_API_KEY environment variable is not set")
         
-        self.client = Groq(api_key=self.api_key)
-        
         # System prompt for generating Manim code
-        self.system_prompt = """You are an expert at generating Manim animation code. 
-Given a natural language prompt, you will generate Python code using Manim to create 
-beautiful and educational 2D animations. Follow these instructions EXACTLY:
-1. ONLY return Python code with no explanations or additional text before or after
-2. Do not include markdown code blocks or any other formatting
-3. Do not include any statements like 'Here's the code', just start directly with the imports
-4. Ensure the code is fully functional and can run on its own
-5. Use Text instead of Tex/MathTex where appropriate
-6. Always include 'import math' if you need mathematical functions
-7. Use Create() instead of ShowCreation() as it's deprecated in newer versions"""
+        self.system_prompt = """You are an expert mathematical animator specializing in Manim, the powerful Python library for creating precise and beautiful mathematical animations. Your task is to generate comprehensive, production-ready Manim code that transforms abstract concepts into visually stunning educational animations.
+
+USE CASE:
+This system serves educators, students, and content creators who need to visualize complex concepts through animation but lack the technical expertise to code these visualizations from scratch. Your generated code will be directly executed to create videos that explain mathematical, scientific, or educational concepts visually. The quality, detail, and educational value of your code directly impacts learners' understanding of complex topics.
+
+REQUIREMENTS (EXTREMELY IMPORTANT):
+1. Generate COMPLETE, READY-TO-RUN Manim code that needs no modifications
+2. Provide EXTREMELY DETAILED animations with thorough comments explaining the mathematical/conceptual significance of each element
+3. Include comprehensive docstrings at the beginning of the code explaining the animation's purpose, concepts illustrated, and mathematical foundations
+4. Structure animations pedagogically - build concepts step by step with clear visual progression
+5. Use vibrant colors strategically to highlight important elements
+6. Include detailed Text labels that explain each step of the concept
+7. Add thoughtful transitions between animation segments
+8. Incorporate appropriate timing (self.wait()) to allow viewers to process information
+9. Use precise positioning and scaling for all objects
+10. Exploit Manim's powerful animation capabilities fully (transforms, fades, indicates, etc.)
+11. Include mathematical formulas where relevant, using appropriate formatting
+12. Design animations that would work well in educational videos (clear, focused, purposeful)
+13. Add camera movements and zooms when they enhance understanding
+14. Use background grids, axes, or reference frames where appropriate
+15. Include extra educational details that might not be explicitly requested but enhance understanding
+
+TECHNICAL REQUIREMENTS:
+- Start with 'from manim import *'
+- Always include 'import math' and 'import numpy as np'
+- Use Text() instead of Tex()/MathTex() where appropriate for compatibility
+- Use Create() instead of ShowCreation() (deprecated)
+- Name the main Scene class 'CustomAnimation'
+- Make animations approximately 30-60 seconds in length
+- Pay special attention to timing - give viewers time to process information
+
+Remember: The generated code MUST be production-ready and execute without errors. Your work directly impacts educational outcomes, so provide the most detailed, comprehensive, and visually effective animations possible without concern for code length or verbosity. MORE DETAIL IS BETTER!"""
         
         # Dictionary of pre-built templates for specific prompts
         self.templates = {
@@ -154,43 +174,72 @@ class CustomAnimation(Scene):
         # For other prompts, try to generate with Groq
         try:
             # Enhance the user prompt with specific requirements
-            enhanced_prompt = f"""Create a Manim animation for the following prompt:
+            enhanced_prompt = f"""Create an EXTREMELY DETAILED Manim animation for the following prompt:
 {prompt}
 
-Requirements:
+I need a comprehensive, production-ready animation that explains this concept thoroughly with visual clarity and educational depth. The animation should:
+
+1. Begin with a clear introduction to the concept
+2. Break down each component step-by-step with detailed visual explanations
+3. Use color strategically to highlight important elements and relationships
+4. Include detailed text annotations explaining each step and its significance
+5. Utilize camera movements, zooms, or highlights to emphasize key points
+6. Show mathematical relationships explicitly where relevant
+7. Build complexity gradually to ensure viewer understanding
+8. Include thoughtful transitions between different stages of the explanation
+9. End with a comprehensive summary that reinforces the key insights
+
+TECHNICAL REQUIREMENTS:
 1. Use the Scene class named 'CustomAnimation'
-2. Include all necessary imports (always start with 'from manim import *', and include 'import math' if needed)
-3. Use appropriate animations and transitions
-4. Add text labels and explanations where needed
-5. Ensure smooth animations with appropriate timing
-6. Use color to enhance understanding
-7. Keep the animation under 1 minute
+2. Include ALL necessary imports (start with 'from manim import *', and include 'import math' and 'import numpy as np')
+3. Use appropriate animations and transitions with proper timing
+4. Add DETAILED text labels and explanations for ALL elements
+5. Include appropriate pauses (self.wait()) to allow viewers time to process information
+6. Use vibrant colors to enhance understanding and visual appeal
+7. Design the animation to be approximately 30-60 seconds in length
 8. IMPORTANT: Use Text instead of Tex/MathTex where appropriate
 9. IMPORTANT: Use Create() instead of ShowCreation() as the latter is deprecated
 
 The code MUST start exactly like this:
 from manim import *
-import math  # Include this if you need mathematical functions
-import numpy as np  # Include this if you need numpy
+import math
+import numpy as np
 
 class CustomAnimation(Scene):
+    \"\"\"
+    [Include a detailed docstring explaining the animation's purpose, mathematical foundations, and educational goals]
+    \"\"\"
     def construct(self):
-        # Your code here
+        # Your DETAILED code here with comprehensive comments
 """
 
-            # Use Groq to generate code
-            response = self.client.chat.completions.create(
-                messages=[
+            # Use direct HTTP request to Groq API
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            
+            data = {
+                "messages": [
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": enhanced_prompt}
                 ],
-                model="mixtral-8x7b-32768",
-                max_tokens=2000,
-                temperature=0.7,
+                "model": "mixtral-8x7b-32768",
+                "max_tokens": 4000,
+                "temperature": 0.7
+            }
+            
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=data
             )
             
-            # Extract the generated code
-            raw_generated_code = response.choices[0].message.content.strip()
+            if response.status_code != 200:
+                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+            
+            result = response.json()
+            raw_generated_code = result["choices"][0]["message"]["content"].strip()
             
             # For debugging
             print("Raw response from Groq:")
