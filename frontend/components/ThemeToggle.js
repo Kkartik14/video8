@@ -18,6 +18,7 @@ const ThemeToggle = () => {
   }, []);
 
   const toggleTheme = () => {
+    // Toggle dark mode
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
     
@@ -34,13 +35,15 @@ const ThemeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-full bg-gray-200 dark:bg-dark-100 text-gray-700 dark:text-gray-200 transition-all duration-300 hover:shadow-glow"
+      className="p-2 rounded-md bg-gray-100 dark:bg-dark-100 
+        text-gray-700 dark:text-gray-200 transition-all duration-300 
+        hover:bg-gray-200 dark:hover:bg-dark-200"
       aria-label="Toggle dark mode"
     >
       {darkMode ? (
-        <FaSun className="h-5 w-5 text-yellow-400" />
+        <FaSun className="h-4 w-4 text-yellow-400" />
       ) : (
-        <FaMoon className="h-5 w-5 text-blue-500" />
+        <FaMoon className="h-4 w-4 text-blue-500" />
       )}
     </button>
   );

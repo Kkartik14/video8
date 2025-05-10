@@ -24,20 +24,33 @@ const HeroAnimation = () => {
     // Handle window resize
     window.addEventListener('resize', resizeCanvas);
     
+    // New colors matching our theme
+    const colors = {
+      blue: '#00B4D8',
+      purple: '#8B5CF6',
+      green: '#00D084',
+      red: '#FF3366'
+    };
+
+    // Draw a point
+    const drawPoint = (x, y, radius, color) => {
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    };
+    
     const drawCircle = (x, y, radius, color, phase = 0) => {
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
       
       // Draw moving point on circle
       const pointX = x + radius * Math.cos(time + phase);
       const pointY = y + radius * Math.sin(time + phase);
-      ctx.beginPath();
-      ctx.arc(pointX, pointY, 5, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
+      drawPoint(pointX, pointY, 2, color);
       
       return { pointX, pointY };
     };
@@ -70,7 +83,7 @@ const HeroAnimation = () => {
       ctx.closePath();
       
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     };
     
@@ -104,7 +117,7 @@ const HeroAnimation = () => {
       ctx.closePath();
       
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     };
     
@@ -120,6 +133,116 @@ const HeroAnimation = () => {
       
       ctx.fillText(symbol, x, y);
     };
+
+    // Draw a sine or cosine wave
+    const drawWave = (startX, startY, width, amplitude, frequency, color, type = 'sine') => {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      
+      for (let i = 0; i <= width; i += 5) {
+        const x = startX + i;
+        let y;
+        
+        if (type === 'sine') {
+          y = startY + Math.sin((i / width) * Math.PI * 2 * frequency + time) * amplitude;
+        } else {
+          y = startY + Math.cos((i / width) * Math.PI * 2 * frequency + time) * amplitude;
+        }
+        
+        ctx.lineTo(x, y);
+      }
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Moving point on the wave
+      const phaseShift = time % (Math.PI * 2);
+      const pointPosition = (width / 4) * (1 + Math.sin(phaseShift));
+      const pointX = startX + pointPosition;
+      let pointY;
+      
+      if (type === 'sine') {
+        pointY = startY + Math.sin((pointPosition / width) * Math.PI * 2 * frequency + time) * amplitude;
+      } else {
+        pointY = startY + Math.cos((pointPosition / width) * Math.PI * 2 * frequency + time) * amplitude;
+      }
+      
+      drawPoint(pointX, pointY, 2, color);
+    };
+
+    // Draw a grid - very subtle
+    const drawGrid = (spacing, color, opacity) => {
+      const width = canvas.width;
+      const height = canvas.height;
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 0.5;
+      ctx.globalAlpha = opacity;
+      
+      // Vertical lines
+      for (let x = spacing; x < width; x += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      
+      // Horizontal lines
+      for (let y = spacing; y < height; y += spacing) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      
+      ctx.globalAlpha = 1;
+    };
+
+    // Draw axes
+    const drawAxes = (centerX, centerY, length, color) => {
+      // X-Axis
+      ctx.beginPath();
+      ctx.moveTo(centerX - length, centerY);
+      ctx.lineTo(centerX + length, centerY);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      
+      // X-Axis arrow
+      ctx.beginPath();
+      ctx.moveTo(centerX + length, centerY);
+      ctx.lineTo(centerX + length - 10, centerY - 5);
+      ctx.lineTo(centerX + length - 10, centerY + 5);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      
+      // Y-Axis
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY + length);
+      ctx.lineTo(centerX, centerY - length);
+      ctx.stroke();
+      
+      // Y-Axis arrow
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - length);
+      ctx.lineTo(centerX - 5, centerY - length + 10);
+      ctx.lineTo(centerX + 5, centerY - length + 10);
+      ctx.closePath();
+      ctx.fill();
+    };
+    
+    // Create gradient
+    const createGradient = () => {
+      const { width, height } = canvas;
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, colors.purple);
+      gradient.addColorStop(0.33, colors.red);
+      gradient.addColorStop(0.66, colors.blue);
+      gradient.addColorStop(1, colors.green);
+      return gradient;
+    };
     
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -131,41 +254,46 @@ const HeroAnimation = () => {
       
       // Determine if dark mode based on body class
       const isDarkMode = document.body.classList.contains('dark');
-      const bgColor = isDarkMode ? '#1E293B' : '#F9FAFB';
       
       // Background with opacity
-      ctx.fillStyle = bgColor;
-      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = isDarkMode ? '#0A0A0A' : '#F9FAFB';
+      ctx.globalAlpha = 0.1;
       ctx.fillRect(0, 0, width, height);
       ctx.globalAlpha = 1;
       
+      // Draw a subtle grid
+      drawGrid(60, isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.025)', 0.2);
+      
+      // Draw sine wave along x-axis
+      drawWave(width * 0.25, height * 0.7, width * 0.5, 30, 1.5, colors.blue, 'sine');
+      
       // Draw animated circles
-      const circle1 = drawCircle(centerX, centerY, 80, '#3B82F6');
-      drawCircle(centerX, centerY, 120, '#8B5CF6', Math.PI / 3);
-      drawCircle(centerX, centerY, 160, '#10B981', Math.PI / 6);
+      const circle1 = drawCircle(centerX, centerY, 70, colors.purple);
+      drawCircle(centerX, centerY, 100, colors.blue, Math.PI / 3);
+      drawCircle(centerX, centerY, 130, colors.green, Math.PI / 6);
       
       // Draw rotating triangle
-      drawTriangle(centerX, centerY, 180, '#F59E0B', time * 0.7);
-      
-      // Draw rotating square
-      drawSquare(centerX, centerY, 260, '#EF4444', -time * 0.5);
+      drawTriangle(centerX, centerY, 160, colors.red, time * 0.5);
       
       // Draw math symbols that orbit around
-      const symbolRadius = 220;
-      const numSymbols = 8;
+      const symbolRadius = 180;
+      const numSymbols = 6;
       for (let i = 0; i < numSymbols; i++) {
         const angle = (i / numSymbols) * Math.PI * 2 + time * 0.2;
         const x = centerX + symbolRadius * Math.cos(angle);
         const y = centerY + symbolRadius * Math.sin(angle);
-        drawMathSymbol(x, y, 24, '#06B6D4');
+        drawMathSymbol(x, y, 20, colors.blue);
       }
       
-      // Draw connecting lines
+      // Draw connecting lines 
       ctx.beginPath();
+      ctx.setLineDash([5, 10]);
       ctx.moveTo(circle1.pointX, circle1.pointY);
-      ctx.lineTo(centerX + 90 * Math.cos(time * 0.7), centerY + 90 * Math.sin(time * 0.7));
-      ctx.strokeStyle = '#3B82F6';
+      ctx.lineTo(centerX + 80 * Math.cos(time * 0.5), centerY + 80 * Math.sin(time * 0.5));
+      ctx.strokeStyle = colors.purple;
+      ctx.lineWidth = 1;
       ctx.stroke();
+      ctx.setLineDash([]);
       
       // Update time for animation
       time += 0.01;
@@ -185,7 +313,7 @@ const HeroAnimation = () => {
   }, []);
   
   return (
-    <div className="hero-animation-container w-full h-full absolute top-0 left-0 opacity-30 dark:opacity-50 pointer-events-none">
+    <div className="hero-animation-container w-full h-full absolute top-0 left-0 opacity-25 dark:opacity-40 pointer-events-none">
       <canvas 
         ref={canvasRef} 
         className="w-full h-full"

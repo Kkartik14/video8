@@ -52,25 +52,24 @@ export default function Home() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-600/10 dark:from-blue-900/20 dark:to-purple-900/20 p-8 mb-12">
+        <div className="relative overflow-hidden rounded-lg bg-gradient-animation p-8 mb-12">
           <HeroAnimation />
+          
           <div className="relative z-10 text-center py-10">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white">
-              <span className="inline-block wavy-text">
-                {'Prompt-to-2D-Video Generator'.split('').map((char, i) => (
-                  <span key={i} style={{ '--i': i }}>{char}</span>
-                ))}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 dark:text-white mb-6">
+              <span className="gradient-text">
+                Prompt-to-2D-Video Generator
               </span>
             </h1>
-            <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-gray-600 dark:text-gray-300">
+            <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-gray-600 dark:text-gray-300 animate-fade-in">
               Transform your ideas into stunning mathematical animations using AI and Manim.
               Just describe what you want to visualize, and watch your concepts come to life.
             </p>
-            <div className="mt-8 flex justify-center space-x-4">
-              <a href="#generator" className="px-8 py-3 text-base font-medium rounded-md text-white bg-gradient-to-r from-primary to-accent hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-blue-500/30 transition-all duration-300">
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <a href="#generator" className="px-8 py-3 text-base font-medium rounded-md text-white bg-gradient-to-r from-primary to-accent hover:from-blue-600 hover:to-purple-600 transition-all duration-300 animate-fade-in">
                 Start Creating
               </a>
-              <a href="#how-it-works" className="px-8 py-3 text-base font-medium rounded-md text-gray-700 dark:text-white bg-white dark:bg-dark-100 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark-200 shadow-lg transition-all duration-300">
+              <a href="#how-it-works" className="px-8 py-3 text-base font-medium rounded-md text-gray-700 dark:text-white bg-white/10 dark:bg-white/5 border border-gray-300 dark:border-gray-800 backdrop-blur-sm hover:bg-white/20 dark:hover:bg-white/10 transition-all duration-300 animate-fade-in" style={{animationDelay: '100ms'}}>
                 Learn More
               </a>
             </div>
@@ -79,10 +78,10 @@ export default function Home() {
 
         <div id="generator" className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-white dark:bg-dark-100 shadow-xl dark:shadow-black/30 rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-[1.01]">
+            <div className="bg-white dark:bg-dark-100 shadow-card rounded-lg overflow-hidden transition-all duration-300 border border-transparent dark:border-gray-800/30">
               <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-                  <span className="inline-block w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white mr-3">1</span>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-4">
+                  <span className="inline-block w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white mr-3">1</span>
                   Create Your Animation
                 </h2>
                 <PromptForm onSubmit={handleSubmit} isLoading={isLoading} />
@@ -90,7 +89,7 @@ export default function Home() {
             </div>
             
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 mb-6 rounded-md shadow-lg animate-fade-in">
+              <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 mb-6 rounded-md shadow-card animate-fade-in">
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -110,10 +109,10 @@ export default function Home() {
             )}
             
             {videoPath && (
-              <div className="bg-white dark:bg-dark-100 shadow-xl dark:shadow-black/30 rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-[1.01]">
+              <div className="bg-white dark:bg-dark-100 shadow-card rounded-lg overflow-hidden transition-all duration-300 border border-transparent dark:border-gray-800/30 animate-fade-in">
                 <div className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-                    <span className="inline-block w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-white mr-3">2</span>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-4">
+                    <span className="inline-block w-8 h-8 rounded-md bg-secondary flex items-center justify-center text-white mr-3">2</span>
                     Your Generated Animation
                   </h2>
                   <VideoResult videoPath={videoPath} scriptPath={scriptPath} narrationScript={narrationScript} />
@@ -124,12 +123,19 @@ export default function Home() {
           
           <div className="lg:col-span-4">
             <div className="sticky top-24 space-y-6">
-              <div className="bg-white dark:bg-dark-100 shadow-xl dark:shadow-black/30 rounded-xl overflow-hidden transition-all duration-300 transform hover:scale-[1.01]">
+              <div className="bg-white dark:bg-dark-100 shadow-card rounded-lg overflow-hidden transition-all duration-300 border border-transparent dark:border-gray-800/30">
                 <InfoSection />
               </div>
               
-              <div className="bg-gradient-to-br from-blue-400 to-purple-500 dark:from-blue-600 dark:to-purple-700 p-6 rounded-xl text-white shadow-lg">
-                <h3 className="text-lg font-bold mb-3">Pro Tip!</h3>
+              <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 dark:from-purple-800/20 dark:to-blue-800/20 backdrop-blur-sm rounded-lg p-6 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-800/30">
+                <h3 className="text-lg font-bold mb-3 flex items-center">
+                  <span className="inline-block w-6 h-6 rounded-md bg-purple-500/20 flex items-center justify-center mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  Pro Tip!
+                </h3>
                 <p className="text-sm opacity-90">
                   Try using specific mathematical terms in your prompts for more precise visualizations. 
                   For example, "Show how the sine and cosine functions relate to the unit circle" will 
