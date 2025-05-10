@@ -13,6 +13,9 @@ An intelligent system that converts natural language prompts into beautiful 2D a
 - Educational and conceptual visualization support
 - Modern Next.js frontend with a clean, responsive UI
 - FastAPI backend with straightforward REST API
+- **NEW!** Advanced prompt optimization for comprehensive explanations
+- **NEW!** Unlimited video length - create videos as detailed as needed
+- **NEW!** Smart text and object management for cleaner animations
 
 ## 🚀 Quick Start
 
@@ -98,7 +101,7 @@ Send a POST request to `/generate` with your prompt:
 ```bash
 curl -X POST http://localhost:8000/generate \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Visualize the Pythagorean theorem with animated squares and triangles", "model": "claude"}'
+  -d '{"prompt": "Visualize the Pythagorean theorem with animated squares and triangles", "model": "claude", "optimize_prompt": true}'
 ```
 
 The response will include paths to both the video and the generated script:
@@ -108,6 +111,7 @@ The response will include paths to both the video and the generated script:
   "video_path": "/outputs/video_id",
   "script_path": "/scripts/script_id",
   "narration_script": "Full text of the narration script for the animation",
+  "enhanced_prompt": "The optimized, detailed prompt used for generation",
   "message": "Video and script generated successfully!"
 }
 ```
@@ -173,6 +177,8 @@ If you receive a 404 error when trying to view a generated video:
   - `llm_handler.py`: Claude API integration
   - `groq_handler.py`: Groq API integration
   - `scene_generator.py`: Manim scene generation logic
+  - `prompt_optimizer.py`: Enhances user prompts for better animations
+  - `example_animations.py`: Reference animations demonstrating best practices
 - `frontend/`: Next.js frontend application
   - `pages/`: Next.js pages
   - `components/`: React components
@@ -182,6 +188,25 @@ If you receive a 404 error when trying to view a generated video:
 - `index.js`: Unified startup script for development
 - `setup.js`: Interactive setup script
 - `docker-compose.yml`: Docker configuration
+- `ANIMATION_IMPROVEMENTS.md`: Details on animation quality enhancements
+- `PROMPT_OPTIMIZATION.md`: Information about the prompt optimization system
+
+## 🚀 Recent Enhancements
+
+### Prompt Optimization
+The system now includes a powerful prompt optimizer that transforms basic prompts into detailed, comprehensive instructions for better educational animations. See [PROMPT_OPTIMIZATION.md](PROMPT_OPTIMIZATION.md) for details.
+
+### Unlimited Video Length
+Time constraints have been removed - animations can now be as long as needed to fully explain concepts rather than being limited to 1-3 minutes.
+
+### Smarter Animation Techniques
+We've implemented numerous improvements to animation quality, including:
+- Better text management to avoid overlays
+- Proper cleanup of elements when no longer needed 
+- Spatial organization with defined screen regions
+- Enhanced progressive animations with transforms
+
+See [ANIMATION_IMPROVEMENTS.md](ANIMATION_IMPROVEMENTS.md) for details on animation quality enhancements.
 
 ## 🎭 How Narration and Animation Work Together
 
@@ -201,7 +226,7 @@ This approach ensures that:
 
 While the system doesn't automatically generate audio narration, the provided script is perfect for recording your own voiceover or using with a text-to-speech service to create a complete educational video.
 
-## �� Docker Deployment
+## 🎨 Docker Deployment
 
 You can also run the application using Docker Compose:
 

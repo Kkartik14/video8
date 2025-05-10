@@ -33,8 +33,10 @@ REQUIREMENTS:
 8. Use a logical progression that builds understanding step-by-step
 9. Include questions or points of reflection to engage viewers
 10. End with a clear summary of key takeaways
+11. IMPORTANT: Be COMPREHENSIVE and THOROUGH in your explanations - don't limit yourself
+12. Include ALL necessary details and don't rush your explanations
 
-The script should be approximately 2-3 minutes when read aloud at a natural pace. Focus on clarity, engagement, and educational value above all else."""
+Focus on clarity, engagement, educational value, and COMPLETENESS. Make the explanation as thorough as possible while maintaining audience engagement."""
 
         # System prompt for generating Manim code based on script
         self.animation_system_prompt = """You are an expert mathematical animator specializing in Manim, the powerful Python library for creating precise and beautiful mathematical animations. Your task is to generate comprehensive, production-ready Manim code that transforms abstract concepts into visually stunning educational animations that align perfectly with a provided narration script.
@@ -64,7 +66,9 @@ REQUIREMENTS (EXTREMELY IMPORTANT):
 19. CRITICAL: Always remove or fade out text and objects before adding new ones in the same area
 20. CRITICAL: Never leave old objects on screen when they're no longer relevant
 21. CRITICAL: Use spatial planning - define clear regions (title, main content, explanation)
-22. CRITICAL: When explaining step-by-step, use transforms to show progression clearly 
+22. CRITICAL: When explaining step-by-step, use transforms to show progression clearly
+23. CRITICAL: Create a COMPREHENSIVE and IN-DEPTH animation - don't rush the explanation
+24. CRITICAL: Take as much time as needed to fully explain each concept - do not limit the animation length
 
 TECHNICAL REQUIREMENTS:
 - Start with 'from manim import *'
@@ -72,7 +76,7 @@ TECHNICAL REQUIREMENTS:
 - Use Text() instead of Tex()/MathTex() where appropriate for compatibility
 - Use Create() instead of ShowCreation() (deprecated)
 - Name the main Scene class 'CustomAnimation'
-- Make animations match the script length (typically 2-3 minutes)
+- Make the animation match the script length, however long it needs to be for a complete explanation
 - Pay special attention to timing - allow time for narration of each concept
 - Never include triple backticks (```) or other markdown syntax anywhere in the code
 - Always use FadeOut() for any object before creating a new one in the same space
@@ -100,6 +104,9 @@ The script should:
 5. Explain any complex terminology
 6. Include 1-2 relatable examples or analogies
 7. End with a clear summary of the key takeaways
+8. Be COMPREHENSIVE and THOROUGH - don't limit the length or rush explanations
+9. Cover all aspects of the topic in sufficient detail for complete understanding
+10. Take as much time as needed to properly explain the concept - there is NO time limit
 
 Format the script like this:
 [00:00] INTRODUCTION
@@ -111,10 +118,11 @@ Format the script like this:
 [01:15] MAIN CONCEPT 2
 [Script text goes here...]
 
-[02:00] CONCLUSION
+[02:00] ADDITIONAL CONCEPTS (as many sections as needed)
 [Script text goes here...]
 
-Keep the total narration length to approximately 2-3 minutes when read at a natural pace."""
+[XX:XX] CONCLUSION
+[Script text goes here...]"""
 
         # Use direct HTTP request to Groq API
         headers = {
@@ -128,7 +136,7 @@ Keep the total narration length to approximately 2-3 minutes when read at a natu
                 {"role": "user", "content": enhanced_prompt}
             ],
             "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
-            "max_tokens": 2000,
+            "max_tokens": 4000,
             "temperature": 0.7
         }
         
@@ -183,7 +191,7 @@ Requirements:
 12. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
 13. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
 14. CRITICALLY IMPORTANT: Always remove or fade out text and objects before adding new ones in the same space
-15. CRITICALLY IMPORTANT: Use Transform() to update text/objects rather than creating new ones and leaving old ones
+15. CRITICALLY IMPORT: Use Transform() to update text/objects rather than creating new ones and leaving old ones
 16. CRITICALLY IMPORTANT: Define clear spatial zones on the screen and maintain consistent positioning:
     - title_region = UP * 3.5
     - main_region = ORIGIN
@@ -192,6 +200,9 @@ Requirements:
 18. When explaining step-by-step processes, use transforms to show progressive changes
 19. Always use FadeOut() for objects that are no longer needed to keep the scene clean
 20. When showing multiple items, arrange them with proper spacing using arrange() or position them with UP/DOWN/LEFT/RIGHT
+21. CRITICALLY IMPORTANT: Create a COMPREHENSIVE and IN-DEPTH animation - don't rush the explanation
+22. Take as much time as needed to fully explain the concept - there is NO time limit
+23. The animation should match the narration script length, however long that may be
 
 If you can't create a specific animation for this prompt, do NOT use a generic template. Instead, create a targeted animation that addresses the prompt as specifically as possible.
 
@@ -222,7 +233,7 @@ class CustomAnimation(Scene):
                 {"role": "user", "content": enhanced_prompt}
             ],
             "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
-            "max_tokens": 4000,
+            "max_tokens": 8000,
             "temperature": 0.7
         }
         

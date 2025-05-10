@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import tempfile
 import uuid
-from typing import Literal, Optional
+from typing import Literal, Optional, Dict, Any
 
 # Add the current directory to sys.path for module imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from llm_handler import LLMHandler
 from groq_handler import GroqHandler
 from scene_generator import SceneGenerator
+from prompt_optimizer import PromptOptimizer
 
 # Load environment variables
 load_dotenv()
@@ -37,11 +38,13 @@ app.add_middleware(
 class PromptRequest(BaseModel):
     prompt: str
     model: Optional[Literal["claude", "groq"]] = "claude"
+    optimize_prompt: Optional[bool] = True
 
 class GenerationResponse(BaseModel):
     video_path: str
     script_path: str
     narration_script: str
+    enhanced_prompt: Optional[str] = None
     message: str
 
 @app.post("/generate", response_model=GenerationResponse)
@@ -50,17 +53,31 @@ async def generate_video(request: PromptRequest):
     generation_id = str(uuid.uuid4())
     
     try:
+        # Initialize prompt optimizer if needed
+        enhanced_prompt = request.prompt
+        if request.optimize_prompt:
+            try:
+                prompt_optimizer = PromptOptimizer()
+                enhanced_prompt = prompt_optimizer.enhance_prompt(request.prompt)
+                print(f"Enhanced prompt: {enhanced_prompt[:200]}...")
+            except Exception as e:
+                print(f"Warning: Could not optimize prompt: {str(e)}")
+                print("Continuing with original prompt...")
+                enhanced_prompt = request.prompt
+        else:
+            enhanced_prompt = request.prompt
+        
         # Initialize handlers based on selected model
         if request.model == "claude":
             llm_handler = LLMHandler()
             # Generate narration script first
-            narration_script = llm_handler.generate_narration_script(request.prompt)
+            narration_script = llm_handler.generate_narration_script(enhanced_prompt)
             # Then use narration script to generate more aligned Manim code
-            manim_code = llm_handler.generate_manim_code(request.prompt, narration_script)
+            manim_code = llm_handler.generate_manim_code(enhanced_prompt, narration_script)
         else:
             llm_handler = GroqHandler()
-            narration_script = llm_handler.generate_narration_script(request.prompt)
-            manim_code = llm_handler.generate_manim_code(request.prompt, narration_script)
+            narration_script = llm_handler.generate_narration_script(enhanced_prompt)
+            manim_code = llm_handler.generate_manim_code(enhanced_prompt, narration_script)
         
         # Initialize scene generator
         scene_generator = SceneGenerator()
@@ -82,6 +99,14 @@ async def generate_video(request: PromptRequest):
         with open(narration_path, "w") as f:
             f.write(narration_script)
         
+        # Also save the enhanced prompt if it was used
+        if request.optimize_prompt:
+            prompts_dir = os.path.join(parent_dir, "outputs", "prompts")
+            os.makedirs(prompts_dir, exist_ok=True)
+            prompt_path = os.path.join(prompts_dir, f"{generation_id}.txt")
+            with open(prompt_path, "w") as f:
+                f.write(f"Original prompt: {request.prompt}\n\nEnhanced prompt: {enhanced_prompt}")
+        
         # Create temporary directory for video output
         with tempfile.TemporaryDirectory() as temp_dir:
             # Generate and render the video
@@ -96,6 +121,7 @@ async def generate_video(request: PromptRequest):
                 video_path=f"/outputs/{video_id}",
                 script_path=f"/scripts/{generation_id}",
                 narration_script=narration_script,
+                enhanced_prompt=enhanced_prompt if request.optimize_prompt else None,
                 message="Video and script generated successfully!"
             )
             

@@ -56,8 +56,10 @@ REQUIREMENTS:
 8. Use a logical progression that builds understanding step-by-step
 9. Include questions or points of reflection to engage viewers
 10. End with a clear summary of key takeaways
+11. IMPORTANT: Be COMPREHENSIVE and THOROUGH in your explanations - include all necessary details
+12. Don't rush or abbreviate explanations - take the time needed to properly explain the concept
 
-The script should be approximately 2-3 minutes when read aloud at a natural pace. Focus on clarity, engagement, and educational value above all else."""
+Focus on clarity, engagement, educational value, and COMPLETENESS. Aim to make the explanation as thorough as possible while maintaining audience engagement."""
         
     def generate_narration_script(self, prompt: str) -> str:
         """Generate a narration script for the animation based on the prompt"""
@@ -71,7 +73,8 @@ The script should:
 3. Include timestamps or markers for transitions between key points
 4. Use clear, accessible language to explain complex ideas
 5. Have a compelling conclusion that summarizes key takeaways
-6. Be approximately 2-3 minutes when read aloud
+6. Be COMPREHENSIVE and THOROUGH - don't limit the length or rush explanations
+7. Cover all aspects of the topic in sufficient detail for full understanding
 
 Format the script with timestamps like this:
 [00:00] INTRODUCTION
@@ -83,7 +86,10 @@ Format the script with timestamps like this:
 [01:15] SECOND CONCEPT
 (Second concept content here)
 
-[02:00] CONCLUSION
+[02:00] ADDITIONAL CONCEPTS (as many as needed)
+(Additional content here)
+
+[XX:XX] CONCLUSION
 (Conclusion content here)
 """
 
@@ -97,7 +103,7 @@ Format the script with timestamps like this:
         data = {
             "model": "claude-2.0",
             "prompt": f"\n\nHuman: {self.script_system_prompt}\n\n{enhanced_prompt}\n\nAssistant:",
-            "max_tokens_to_sample": 2000,
+            "max_tokens_to_sample": 4000,
             "temperature": 0.7
         }
         
@@ -138,7 +144,7 @@ Format the script with timestamps like this:
 4. Add text labels and explanations where needed
 5. Ensure smooth animations with appropriate timing
 6. Use color to enhance understanding
-7. Keep the animation under 1 minute
+7. IMPORTANT: Create a COMPREHENSIVE and IN-DEPTH animation that fully explains the concept - don't rush
 8. IMPORTANT: Do NOT use Tex, MathTex, or any LaTeX-dependent objects as they require LaTeX. Use Text instead.
 9. IMPORTANT: Use Create() instead of ShowCreation() as the latter is deprecated
 10. IMPORTANT: Do NOT include any self.wait() or other self references outside of the construct method
@@ -194,7 +200,7 @@ class CustomAnimation(Scene):
         data = {
             "model": "claude-2.0",
             "prompt": f"\n\nHuman: {self.system_prompt}\n\n{enhanced_prompt}\n\nAssistant:",
-            "max_tokens_to_sample": 2000,
+            "max_tokens_to_sample": 8000,
             "temperature": 0.7
         }
         
