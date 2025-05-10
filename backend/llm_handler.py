@@ -152,25 +152,34 @@ Format the script with timestamps like this:
 12. Include a final self.wait(2) at the end of the construct method to allow viewing the final state
 13. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
 14. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
+15. CRITICALLY IMPORTANT: Ensure all text elements stay within visible screen boundaries
+16. ESSENTIAL: Keep text positioning within a safe distance from screen edges:
+    - Use max values of ±6 for x or y coordinates to avoid text going off-screen
+    - Implement boundary checking with helper functions if needed
+    - When text has dynamic positioning, verify it stays visible
 
 """
 
         # Add narration-specific requirements if a script is provided
         if narration_script:
-            enhanced_prompt += """15. EXTREMELY IMPORTANT: Ensure the animations align with the timestamps and sections in the narration script provided
-16. Use appropriate self.wait() durations to match narration timing - typically:
+            enhanced_prompt += """17. EXTREMELY IMPORTANT: Ensure the animations align with the timestamps and sections in the narration script provided
+18. Use appropriate self.wait() durations to match narration timing - typically:
    - 1-2 seconds for short sentences
    - 2-3 seconds for complex concepts
    - 0.5-1 seconds for transitions
-17. Time visual elements to appear exactly when they would be mentioned in the narration
-18. EXTREMELY IMPORTANT: Always clean up the scene by using FadeOut() for objects no longer needed
-19. EXTREMELY IMPORTANT: Avoid text overlay problems by using text replacement techniques:
+19. Time visual elements to appear exactly when they would be mentioned in the narration
+20. EXTREMELY IMPORTANT: Always clean up the scene by using FadeOut() for objects no longer needed
+21. EXTREMELY IMPORTANT: Avoid text overlay problems by using text replacement techniques:
     - Use Transform(old_text, new_text) when updating related concepts
     - Use FadeOut(old_text) followed by FadeIn(new_text) when changing topics
     - Group related text elements to manage them together
-20. Define clear spatial zones on the screen (e.g., title area, main demonstration area, explanation area)
-21. Use shifting techniques (text.shift(UP/DOWN/LEFT/RIGHT)) to ensure elements don't overlap
-22. When showing progressive steps, use consistent positioning and transitions to show the evolution
+22. Define clear spatial zones on the screen (e.g., title area, main demonstration area, explanation area)
+23. Use shifting techniques (text.shift(UP/DOWN/LEFT/RIGHT)) to ensure elements don't overlap
+24. When showing progressive steps, use consistent positioning and transitions to show the evolution
+25. IMPORTANT: Ensure all text stays within visible screen boundaries by:
+    - Keeping coordinate values between -6 and 6 for both x and y
+    - Scaling text if needed to fit within boundaries
+    - Using helper functions to ensure positions stay within boundaries
 """
 
         enhanced_prompt += """
@@ -183,6 +192,22 @@ import numpy as np  # Include this if you need numpy
 
 class CustomAnimation(Scene):
     def construct(self):
+        # Define screen regions for better organization
+        title_region = UP * 3.5
+        main_region = ORIGIN
+        explanation_region = DOWN * 3 + LEFT * 3
+        
+        # Define safe boundaries for text placement
+        boundary_threshold = 6  # Max distance from origin to stay in bounds
+        
+        def ensure_within_boundaries(position, threshold=boundary_threshold):
+            \"\"\"Ensure a position is within the safe boundaries of the screen.\"\"\"
+            if isinstance(position, np.ndarray):
+                # Normalize the position if it's too far from origin
+                magnitude = np.linalg.norm(position)
+                if magnitude > threshold:
+                    return position * (threshold / magnitude)
+            return position
 """
         # Add appropriate comment based on whether there's a narration script
         if narration_script:

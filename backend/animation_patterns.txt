@@ -98,7 +98,42 @@ Bad:
 - Not clearly indicating what changes between steps
 - Jumping between concepts without transitions
 
-## 6. Example: Good Animation Structure
+## 6. Text Boundary Management
+
+Good:
+- Keep text within the visible screen area
+- Use a boundary checking function
+  ```python
+  # Define at the beginning of construct method
+  boundary_threshold = 6  # Max distance from origin to stay in bounds
+  
+  def ensure_within_boundaries(position, threshold=boundary_threshold):
+      """Ensure a position is within the safe boundaries of the screen."""
+      if isinstance(position, np.ndarray):
+          # Normalize the position if it's too far from origin
+          magnitude = np.linalg.norm(position)
+          if magnitude > threshold:
+              return position * (threshold / magnitude)
+      return position
+      
+  # Use it when positioning text
+  text = Text("Important concept").move_to(ensure_within_boundaries(LEFT * 7))
+  ```
+- Keep coordinates within safe ranges (-6 to 6 on both axes)
+- Scale text if needed to fit within boundaries
+  ```python
+  long_text = Text("This is a very long text that might go off screen")
+  if len(long_text.text) > 30:
+      long_text.scale(0.8)  # Scale down long text
+  ```
+
+Bad:
+- Positioning text at extreme coordinates that go off-screen
+- Not checking boundaries for dynamically positioned text
+- Hard-coding positions without considering text length
+- Using very long text without scaling or breaking it into multiple lines
+
+## 7. Example: Good Animation Structure
 
 ```python
 def construct(self):
@@ -138,7 +173,7 @@ def construct(self):
     self.wait(1)
 ```
 
-## 7. Object Persistence and Memory
+## 8. Object Persistence and Memory
 
 Good:
 - Keep track of object references when transforming

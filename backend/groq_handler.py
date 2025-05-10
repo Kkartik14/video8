@@ -2,6 +2,7 @@ import os
 import re
 from typing import Dict, Any
 import requests
+import json
 
 class GroqHandler:
     def __init__(self):
@@ -203,6 +204,11 @@ Requirements:
 21. CRITICALLY IMPORTANT: Create a COMPREHENSIVE and IN-DEPTH animation - don't rush the explanation
 22. Take as much time as needed to fully explain the concept - there is NO time limit
 23. The animation should match the narration script length, however long that may be
+24. CRITICALLY IMPORTANT: Ensure all text elements stay within visible screen boundaries:
+    - Keep coordinate values between -6 and 6 for both x and y axes
+    - Use helper functions to ensure text stays within boundaries
+    - Scale text if needed to fit within viewable area
+    - Check positions especially for dynamic or programmatically placed text
 
 If you can't create a specific animation for this prompt, do NOT use a generic template. Instead, create a targeted animation that addresses the prompt as specifically as possible.
 
@@ -217,6 +223,18 @@ class CustomAnimation(Scene):
         title_region = UP * 3.5
         main_region = ORIGIN
         explanation_region = DOWN * 3 + LEFT * 3
+        
+        # Define safe boundaries for text placement
+        boundary_threshold = 6  # Max distance from origin to stay in bounds
+        
+        def ensure_within_boundaries(position, threshold=boundary_threshold):
+            '''Ensure a position is within the safe boundaries of the screen.'''
+            if isinstance(position, np.ndarray):
+                # Normalize the position if it's too far from origin
+                magnitude = np.linalg.norm(position)
+                if magnitude > threshold:
+                    return position * (threshold / magnitude)
+            return position
         
         # Your code here aligned with narration timestamps
 """
