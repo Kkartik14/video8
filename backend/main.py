@@ -46,20 +46,23 @@ class GenerationResponse(BaseModel):
 
 @app.post("/generate", response_model=GenerationResponse)
 async def generate_video(request: PromptRequest):
+    # Create unique ID for this generation
+    generation_id = str(uuid.uuid4())
+    
     try:
-        # Create unique ID for this generation
-        generation_id = str(uuid.uuid4())
-        
-        # Initialize handlers
+        # Initialize handlers based on selected model
         if request.model == "claude":
             llm_handler = LLMHandler()
-            narration_script = None
-            manim_code = llm_handler.generate_manim_code(request.prompt)
+            # Generate narration script first
+            narration_script = llm_handler.generate_narration_script(request.prompt)
+            # Then use narration script to generate more aligned Manim code
+            manim_code = llm_handler.generate_manim_code(request.prompt, narration_script)
         else:
             llm_handler = GroqHandler()
             narration_script = llm_handler.generate_narration_script(request.prompt)
-            manim_code = llm_handler.generate_manim_code(request.prompt)
-            
+            manim_code = llm_handler.generate_manim_code(request.prompt, narration_script)
+        
+        # Initialize scene generator
         scene_generator = SceneGenerator()
         
         # Save the script to a file
@@ -72,14 +75,12 @@ async def generate_video(request: PromptRequest):
         with open(script_path, "w") as f:
             f.write(manim_code)
         
-        # Save the narration script to a file if available
-        narration_path = None
-        if narration_script:
-            narration_dir = os.path.join(parent_dir, "outputs", "narrations")
-            os.makedirs(narration_dir, exist_ok=True)
-            narration_path = os.path.join(narration_dir, f"{generation_id}.txt")
-            with open(narration_path, "w") as f:
-                f.write(narration_script)
+        # Save the narration script to a file
+        narration_dir = os.path.join(parent_dir, "outputs", "narrations")
+        os.makedirs(narration_dir, exist_ok=True)
+        narration_path = os.path.join(narration_dir, f"{generation_id}.txt")
+        with open(narration_path, "w") as f:
+            f.write(narration_script)
         
         # Create temporary directory for video output
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -94,12 +95,29 @@ async def generate_video(request: PromptRequest):
             return GenerationResponse(
                 video_path=f"/outputs/{video_id}",
                 script_path=f"/scripts/{generation_id}",
-                narration_script=narration_script or "No narration script available for this model.",
+                narration_script=narration_script,
                 message="Video and script generated successfully!"
             )
             
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Delete any partially created files
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(base_dir)
+        
+        # Try to delete script file if it exists
+        script_path = os.path.join(parent_dir, "outputs", "scripts", f"{generation_id}.py")
+        if os.path.exists(script_path):
+            os.remove(script_path)
+            
+        # Try to delete narration file if it exists
+        narration_path = os.path.join(parent_dir, "outputs", "narrations", f"{generation_id}.txt")
+        if os.path.exists(narration_path):
+            os.remove(narration_path)
+            
+        # Raise a detailed HTTP exception
+        error_message = f"Error during video generation: {str(e)}"
+        print(error_message)
+        raise HTTPException(status_code=500, detail=error_message)
 
 @app.get("/outputs/{video_id}")
 async def get_video(video_id: str):

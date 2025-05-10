@@ -22,126 +22,99 @@ beautiful and educational 2D animations. Follow these instructions EXACTLY:
 6. Always include 'import math' if you need mathematical functions
 7. Use Create() instead of ShowCreation() as it's deprecated in newer versions"""
         
-        # General purpose template that can adapt to any prompt
-        self.universal_template = '''from manim import *
-import math
-import numpy as np
+        # System prompt for narration script generation
+        self.script_system_prompt = """You are an expert educational content creator specializing in clear, engaging narration scripts for educational videos. Your task is to create a detailed narration script that explains complex concepts in an accessible, engaging manner.
 
-class CustomAnimation(Scene):
-    """
-    A generic template for creating educational animations.
-    This template is designed to be flexible and adaptable to any educational concept.
-    """
-    def construct(self):
-        # Title section
-        title = Text("Educational Animation", font_size=40)
-        self.play(Write(title))
-        self.wait(1)
-        self.play(title.animate.scale(0.7).to_edge(UP))
-        self.wait(0.5)
+USE CASE:
+This script will be used as the narration for an educational animation. The script needs to align perfectly with a visual animation that will be generated to accompany it. Your script will guide the development of the animation and serve as the voiceover that explains the concepts as they appear visually.
+
+REQUIREMENTS:
+1. Write a COMPLETE, PROFESSIONAL narration script
+2. Structure the script in clear sections (Introduction, Main Concepts, Conclusion)
+3. Include timestamps or markers for key transition points
+4. Write in a conversational, engaging tone appropriate for educational content
+5. Explain complex concepts clearly with appropriate analogies
+6. Include pauses for viewers to process visual information
+7. Keep sentences concise for easier narration
+8. Use a logical progression that builds understanding step-by-step
+9. Include questions or points of reflection to engage viewers
+10. End with a clear summary of key takeaways
+
+The script should be approximately 2-3 minutes when read aloud at a natural pace. Focus on clarity, engagement, and educational value above all else."""
         
-        # Introduction section
-        intro_text = Text("This animation explains an educational concept", font_size=28)
-        intro_text.next_to(title, DOWN, buff=0.5)
-        self.play(Write(intro_text))
-        self.wait(1)
-        self.play(FadeOut(intro_text))
-        
-        # Main content area - center of the screen
-        main_area = Rectangle(height=5, width=8, color=BLUE_E)
-        main_area.set_fill(BLUE_E, opacity=0.1)
-        self.play(Create(main_area))
-        
-        # Placeholder for main content
-        main_content = Text("Main educational content will appear here", font_size=24)
-        main_content.move_to(main_area.get_center())
-        self.play(Write(main_content))
-        self.wait(1)
-        
-        # Interactive element example
-        self.play(FadeOut(main_content))
-        
-        # Create an example visualization - can be adapted to any concept
-        circle = Circle(radius=1.5, color=BLUE)
-        circle.move_to(main_area.get_center())
-        self.play(Create(circle))
-        
-        # Add labels or information points around the visualization
-        info_points = []
-        labels = ["Point 1", "Point 2", "Point 3", "Point 4"]
-        
-        for i, label_text in enumerate(labels):
-            angle = i * PI/2  # Evenly space around the circle
-            point_pos = circle.get_center() + 2 * np.array([np.cos(angle), np.sin(angle), 0])
-            
-            dot = Dot(point_pos, color=YELLOW)
-            label = Text(label_text, font_size=18).next_to(dot, direction=point_pos - circle.get_center(), buff=0.2)
-            
-            info_points.append(VGroup(dot, label))
-            
-        for point in info_points:
-            self.play(Create(point[0]), Write(point[1]))
-            self.wait(0.3)
-        
-        # Transform to another shape to show concept evolution
-        square = Square(side_length=3, color=GREEN)
-        square.move_to(circle.get_center())
-        self.play(Transform(circle, square))
-        self.wait(1)
-        
-        # Example of showing a relationship or connection
-        arrow = Arrow(start=info_points[0][0].get_center(), end=info_points[2][0].get_center(), color=RED)
-        relation_text = Text("Relationship", font_size=20).next_to(arrow, RIGHT)
-        self.play(Create(arrow), Write(relation_text))
-        self.wait(1)
-        
-        # Cleanup for summary
-        self.play(
-            *[FadeOut(point) for point in info_points],
-            FadeOut(arrow),
-            FadeOut(relation_text),
-            FadeOut(circle)  # This is now the square due to transform
-        )
-        
-        # Summary section
-        summary_title = Text("Summary", font_size=36)
-        summary_title.move_to(main_area.get_center() + UP * 1.5)
-        
-        summary_points = VGroup(
-            Text("• Key point 1", font_size=24),
-            Text("• Key point 2", font_size=24),
-            Text("• Key point 3", font_size=24)
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
-        summary_points.next_to(summary_title, DOWN, buff=0.5)
-        
-        self.play(Write(summary_title))
-        for point in summary_points:
-            self.play(Write(point))
-            self.wait(0.3)
-        
-        self.wait(1)
-        
-        # Final cleanup
-        self.play(
-            FadeOut(summary_title),
-            FadeOut(summary_points),
-            FadeOut(main_area)
-        )
-        
-        # End card
-        end_text = Text("Thank you for watching!", font_size=36)
-        self.play(Write(end_text))
-        self.wait(2)
-'''
-        
-    def generate_manim_code(self, prompt: str) -> str:
-        # For all prompts, try to generate with Claude
-        try:
-            # Enhance the user prompt with specific requirements
-            enhanced_prompt = f"""Create a Manim animation for the following prompt:
+    def generate_narration_script(self, prompt: str) -> str:
+        """Generate a narration script for the animation based on the prompt"""
+        # Enhance the user prompt for script generation
+        enhanced_prompt = f"""Create a detailed narration script for an educational video about:
 {prompt}
 
-Requirements:
+The script should:
+1. Have a clear introduction that engages the viewer and explains what they'll learn
+2. Break down the concept into clear, logical sections
+3. Include timestamps or markers for transitions between key points
+4. Use clear, accessible language to explain complex ideas
+5. Have a compelling conclusion that summarizes key takeaways
+6. Be approximately 2-3 minutes when read aloud
+
+Format the script with timestamps like this:
+[00:00] INTRODUCTION
+(Introduction content here)
+
+[00:30] FIRST CONCEPT
+(First concept content here)
+
+[01:15] SECOND CONCEPT
+(Second concept content here)
+
+[02:00] CONCLUSION
+(Conclusion content here)
+"""
+
+        # Using direct API call instead of the library
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": self.api_key,
+            "anthropic-version": "2023-06-01"
+        }
+        
+        data = {
+            "model": "claude-2.0",
+            "prompt": f"\n\nHuman: {self.script_system_prompt}\n\n{enhanced_prompt}\n\nAssistant:",
+            "max_tokens_to_sample": 2000,
+            "temperature": 0.7
+        }
+        
+        response = requests.post(
+            "https://api.anthropic.com/v1/complete",
+            headers=headers,
+            json=data
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+        
+        result = response.json()
+        script = result.get("completion", "")
+        print(f"Raw narration script from Claude:\n{script[:100]}...")
+        
+        if not script or len(script) < 50:
+            raise Exception("Generated narration script is too short or empty")
+            
+        return script
+            
+    def generate_manim_code(self, prompt: str, narration_script: str = None) -> str:
+        # For all prompts, try to generate with Claude
+        # Enhance the user prompt with specific requirements
+        enhanced_prompt = f"""Create a Manim animation for the following prompt:
+{prompt}
+
+"""
+        
+        # Add narration script if provided
+        if narration_script:
+            enhanced_prompt += f"Here is the narration script that the animation should follow precisely:\n{narration_script}\n\n"
+        
+        enhanced_prompt += """Requirements:
 1. Use the Scene class named 'CustomAnimation'
 2. Include all necessary imports (always start with 'from manim import *', and include 'import math' if needed)
 3. Use appropriate animations and transitions
@@ -154,8 +127,20 @@ Requirements:
 10. IMPORTANT: Do NOT include any self.wait() or other self references outside of the construct method
 11. IMPORTANT: All code that references 'self' MUST be properly indented inside the construct method
 12. Include a final self.wait(2) at the end of the construct method to allow viewing the final state
+"""
 
-If you can't create a specific animation for this prompt, adapt the universal template to fit it.
+        # Add narration-specific requirements if a script is provided
+        if narration_script:
+            enhanced_prompt += """13. EXTREMELY IMPORTANT: Ensure the animations align with the timestamps and sections in the narration script provided
+14. Use appropriate self.wait() durations to match narration timing - typically:
+   - 1-2 seconds for short sentences
+   - 2-3 seconds for complex concepts
+   - 0.5-1 seconds for transitions
+15. Time visual elements to appear exactly when they would be mentioned in the narration
+"""
+
+        enhanced_prompt += """
+If you can't create a specific animation for this prompt, do NOT use a generic template. Instead, create a targeted animation that addresses the prompt as specifically as possible.
 
 The code MUST start exactly like this:
 from manim import *
@@ -164,45 +149,47 @@ import numpy as np  # Include this if you need numpy
 
 class CustomAnimation(Scene):
     def construct(self):
-        # Your code here
 """
+        # Add appropriate comment based on whether there's a narration script
+        if narration_script:
+            enhanced_prompt += "        # Your code here aligned with narration timestamps"
+        else:
+            enhanced_prompt += "        # Your code here"
 
-            # Using direct API call instead of the library
-            headers = {
-                "Content-Type": "application/json",
-                "X-API-Key": self.api_key,
-                "anthropic-version": "2023-06-01"
-            }
-            
-            data = {
-                "model": "claude-2.0",
-                "prompt": f"\n\nHuman: {self.system_prompt}\n\n{enhanced_prompt}\n\nAssistant:",
-                "max_tokens_to_sample": 2000,
-                "temperature": 0.7
-            }
-            
-            response = requests.post(
-                "https://api.anthropic.com/v1/complete",
-                headers=headers,
-                json=data
-            )
-            
-            if response.status_code != 200:
-                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
-            
-            result = response.json()
-            code = result.get("completion", "")
-            print(f"Raw response from Claude:\n{code[:100]}...")
-            
-            # Validate and fix the generated code
-            code = self.validate_and_fix_code(code)
-            
-            return code
-            
-        except Exception as e:
-            print(f"Error generating code with Claude: {str(e)}")
-            print("Falling back to universal template")
-            return self.universal_template
+        # Using direct API call instead of the library
+        headers = {
+            "Content-Type": "application/json",
+            "X-API-Key": self.api_key,
+            "anthropic-version": "2023-06-01"
+        }
+        
+        data = {
+            "model": "claude-2.0",
+            "prompt": f"\n\nHuman: {self.system_prompt}\n\n{enhanced_prompt}\n\nAssistant:",
+            "max_tokens_to_sample": 2000,
+            "temperature": 0.7
+        }
+        
+        response = requests.post(
+            "https://api.anthropic.com/v1/complete",
+            headers=headers,
+            json=data
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+        
+        result = response.json()
+        code = result.get("completion", "")
+        print(f"Raw response from Claude:\n{code[:100]}...")
+        
+        if not code or len(code) < 50:
+            raise Exception("Generated Manim code is too short or empty")
+        
+        # Validate and fix the generated code
+        code = self.validate_and_fix_code(code)
+        
+        return code
     
     def validate_and_fix_code(self, code: str) -> str:
         """Validate and fix common issues in the generated Manim code."""
@@ -212,8 +199,7 @@ class CustomAnimation(Scene):
             if start_idx != -1:
                 code = code[start_idx:]
             else:
-                print("Could not find Manim import statement, using universal template")
-                return self.universal_template
+                raise Exception("Could not find Manim import statement in generated code")
                 
         # Replace deprecated methods
         code = code.replace("ShowCreation(", "Create(")
@@ -227,8 +213,7 @@ class CustomAnimation(Scene):
             
         # Check for LaTeX (which we don't want)
         if "MathTex(" in code or "Tex(" in code:
-            print("Found LaTeX objects in code, using universal template instead")
-            return self.universal_template
+            raise Exception("Generated code contains LaTeX objects which are not supported")
         
         # Check if all code is inside the class and method
         fixed_lines = []
@@ -273,6 +258,11 @@ class CustomAnimation(Scene):
                 break
                 
         fixed_code = "\n".join(fixed_lines)
+        
+        # Final validation
+        if not self.validate_code(fixed_code):
+            raise Exception("Generated code is missing required elements")
+            
         return fixed_code
 
     def validate_code(self, code: str) -> bool:

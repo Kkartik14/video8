@@ -6,6 +6,8 @@ An intelligent system that converts natural language prompts into beautiful 2D a
 
 - Natural language prompt processing
 - Automatic Manim animation code generation with Claude or Groq
+- Narration script generation that aligns with animations
+- Animation timing and visuals synchronized with narration flow
 - Script viewing and downloading for learning and customization
 - Video rendering and delivery
 - Educational and conceptual visualization support
@@ -105,11 +107,12 @@ The response will include paths to both the video and the generated script:
 {
   "video_path": "/outputs/video_id",
   "script_path": "/scripts/script_id",
+  "narration_script": "Full text of the narration script for the animation",
   "message": "Video and script generated successfully!"
 }
 ```
 
-You can access the generated script via the `/scripts/{script_id}` endpoint.
+You can access the generated Manim code via the `/scripts/{script_id}` endpoint and the narration script via the `/narrations/{script_id}` endpoint.
 
 ## 🔍 Troubleshooting
 
@@ -180,7 +183,25 @@ If you receive a 404 error when trying to view a generated video:
 - `setup.js`: Interactive setup script
 - `docker-compose.yml`: Docker configuration
 
-## 🐳 Docker Deployment
+## 🎭 How Narration and Animation Work Together
+
+The system now uses a two-step process to create better aligned animations:
+
+1. **Narration Script Generation**: First, a detailed narration script is created based on your prompt. This script includes timestamps and is structured into clear sections (Introduction, Main Concepts, Conclusion).
+
+2. **Animation Code Generation**: The narration script is then provided to the animation code generator, which creates Manim code specifically designed to match the narration flow.
+
+3. **Synchronized Timing**: The animation includes appropriate pauses and transitions timed to match the expected narration pace, making it ready for voiceover recording.
+
+This approach ensures that:
+- Visual elements appear precisely when they would be mentioned in the narration
+- The animation follows the logical structure of the script
+- Complex concepts are given sufficient time for explanation
+- Transitions match the script's sectional breaks
+
+While the system doesn't automatically generate audio narration, the provided script is perfect for recording your own voiceover or using with a text-to-speech service to create a complete educational video.
+
+## �� Docker Deployment
 
 You can also run the application using Docker Compose:
 
