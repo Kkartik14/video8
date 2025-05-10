@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaHeart, FaGithub, FaTwitter, FaLinkedin } from 'react-icons/fa';
+import { FaHeart, FaGithub, FaLinkedin } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 const Footer = () => {
   return (
@@ -46,27 +47,33 @@ const Footer = () => {
                 href="https://github.com/Kkartik14" 
                 className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
                 aria-label="GitHub"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <FaGithub size={24} />
               </a>
               <a 
-                href="#" 
+                href="https://x.com/Kkartik_14" 
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-400 transition-colors"
-                aria-label="Twitter"
+                aria-label="X (Twitter)"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <FaTwitter size={24} />
+                <FaXTwitter size={24} />
               </a>
               <a 
-                href="#" 
+                href="https://www.linkedin.com/in/kartik-gupta14/" 
                 className="text-gray-600 dark:text-gray-300 hover:text-blue-700 transition-colors"
                 aria-label="LinkedIn"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <FaLinkedin size={24} />
               </a>
             </div>
             
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Have suggestions? <a href="mailto:contact@example.com" className="text-primary dark:text-blue-400 hover:underline">Contact us</a>
+              Have suggestions? <a href="mailto:kartik@cosma.chat" className="text-primary dark:text-blue-400 hover:underline">Contact us</a>
             </p>
           </div>
         </div>
