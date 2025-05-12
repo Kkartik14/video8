@@ -38,6 +38,34 @@ a {
   box-sizing: border-box;
 }
 
+/* Landing page styles */
+.landing-text-glow {
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+/* Background image with overlay animation */
+.bg-animate-pulse {
+  animation: bg-pulse 8s ease-in-out infinite;
+}
+
+@keyframes bg-pulse {
+  0%, 100% {
+    filter: brightness(0.8) saturate(1.2);
+  }
+  50% {
+    filter: brightness(1) saturate(1.5);
+  }
+}
+
+/* Button hover animation */
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
 /* Animated background with particles */
 .particles-container {
   position: fixed;

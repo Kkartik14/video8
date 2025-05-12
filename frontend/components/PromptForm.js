@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaSpinner, FaStar, FaLightbulb, FaMagic, FaBrain, FaRandom } from 'react-icons/fa';
+import { FaSpinner, FaStar, FaLightbulb, FaMagic, FaBrain, FaRandom, FaPuzzlePiece } from 'react-icons/fa';
 
 const PromptForm = ({ onSubmit, isLoading }) => {
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('claude');
+  const [useModular, setUseModular] = useState(true);
   const [characterCount, setCharacterCount] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -14,7 +15,7 @@ const PromptForm = ({ onSubmit, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (prompt.trim()) {
-      onSubmit({ prompt, model });
+      onSubmit({ prompt, model, use_modular: useModular });
     }
   };
 
@@ -93,25 +94,47 @@ const PromptForm = ({ onSubmit, isLoading }) => {
             </select>
           </div>
           
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary to-accent hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {isLoading ? (
-                <>
-                  <FaSpinner className="animate-spin mr-2" />
-                  Generating Animation...
-                </>
-              ) : (
-                <>
-                  <FaStar className="mr-2" />
-                  Generate Animation
-                </>
-              )}
-            </button>
+          <div>
+            <label htmlFor="useModular" className="flex items-center mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <FaPuzzlePiece className="text-green-500 mr-2" />
+              Generation approach:
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="useModular"
+                checked={useModular}
+                onChange={(e) => setUseModular(e.target.checked)}
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+              />
+              <label htmlFor="useModular" className="text-sm text-gray-700 dark:text-gray-300">
+                Use modular scene generation (better for complex animations)
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Breaking the animation into smaller scenes helps reduce errors and improves quality
+            </p>
           </div>
+        </div>
+        
+        <div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary to-accent hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            {isLoading ? (
+              <>
+                <FaSpinner className="animate-spin mr-2" />
+                Generating Animation...
+              </>
+            ) : (
+              <>
+                <FaStar className="mr-2" />
+                Generate Animation
+              </>
+            )}
+          </button>
         </div>
       </form>
       

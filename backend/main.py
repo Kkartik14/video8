@@ -39,6 +39,7 @@ class PromptRequest(BaseModel):
     prompt: str
     model: Optional[Literal["claude", "groq"]] = "claude"
     optimize_prompt: Optional[bool] = True
+    use_modular: Optional[bool] = True  # Use the new modular scene generation approach
 
 class GenerationResponse(BaseModel):
     video_path: str
@@ -70,27 +71,17 @@ async def generate_video(request: PromptRequest):
         # Initialize handlers based on selected model
         if request.model == "claude":
             llm_handler = LLMHandler()
-            # Generate narration script first
-            narration_script = llm_handler.generate_narration_script(enhanced_prompt)
-            # Then use narration script to generate more aligned Manim code
-            manim_code = llm_handler.generate_manim_code(enhanced_prompt, narration_script)
         else:
             llm_handler = GroqHandler()
-            narration_script = llm_handler.generate_narration_script(enhanced_prompt)
-            manim_code = llm_handler.generate_manim_code(enhanced_prompt, narration_script)
-        
-        # Initialize scene generator
-        scene_generator = SceneGenerator()
+            
+        # Generate narration script first
+        narration_script = llm_handler.generate_narration_script(enhanced_prompt)
         
         # Save the script to a file
         base_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(base_dir)
         scripts_dir = os.path.join(parent_dir, "outputs", "scripts")
         os.makedirs(scripts_dir, exist_ok=True)
-        
-        script_path = os.path.join(scripts_dir, f"{generation_id}.py")
-        with open(script_path, "w") as f:
-            f.write(manim_code)
         
         # Save the narration script to a file
         narration_dir = os.path.join(parent_dir, "outputs", "narrations")
@@ -109,12 +100,44 @@ async def generate_video(request: PromptRequest):
         
         # Create temporary directory for video output
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Generate and render the video
-            video_id = scene_generator.create_video(
-                manim_code,
-                output_dir=temp_dir,
-                generation_id=generation_id
-            )
+            # Initialize scene generator
+            scene_generator = SceneGenerator()
+            
+            # Check if should use modular approach (from request parameter)
+            use_modular = request.use_modular
+            
+            if use_modular:
+                # Use the new modular approach that breaks down the animation into scenes
+                video_id = scene_generator.create_modular_video(
+                    prompt=enhanced_prompt,
+                    narration_script=narration_script,
+                    output_dir=temp_dir,
+                    generation_id=generation_id,
+                    llm_handler=llm_handler
+                )
+                
+                # Save the generated code from the temp directory
+                temp_file_path = os.path.join(temp_dir, f"scene_{generation_id}.py")
+                if os.path.exists(temp_file_path):
+                    script_path = os.path.join(scripts_dir, f"{generation_id}.py")
+                    with open(temp_file_path, "r") as src, open(script_path, "w") as dst:
+                        manim_code = src.read()
+                        dst.write(manim_code)
+            else:
+                # Use the original approach
+                manim_code = llm_handler.generate_manim_code(enhanced_prompt, narration_script)
+                
+                # Save the script
+                script_path = os.path.join(scripts_dir, f"{generation_id}.py")
+                with open(script_path, "w") as f:
+                    f.write(manim_code)
+                
+                # Generate and render the video with the original method
+                video_id = scene_generator.create_video(
+                    manim_code,
+                    output_dir=temp_dir,
+                    generation_id=generation_id
+                )
             
             # Return the video_id and script_id which will be used to construct the URLs
             return GenerationResponse(

@@ -1,11 +1,13 @@
 import os
 import tempfile
 import subprocess
-from typing import Optional
+from typing import Optional, List, Dict
 import glob
 import shutil
 import re
 import importlib.util
+import uuid
+import json
 
 class SceneGenerator:
     def __init__(self):
@@ -15,9 +17,10 @@ class SceneGenerator:
         # Check if example animations are available
         self.has_examples = os.path.exists(os.path.join(os.path.dirname(__file__), "example_animations.py"))
         
-    def _fix_manim_code(self, code: str) -> str:
+    def _fix_manim_code(self, code: str, scene_class_name: str = None) -> str:
         """
         Fix common issues in generated Manim code to make it compatible with the installed version.
+        Also fixes the class name if it doesn't match the expected name.
         """
         # Remove markdown artifacts (like triple backticks)
         fixed_code = self._remove_markdown_artifacts(code)
@@ -59,6 +62,23 @@ class SceneGenerator:
         
         # Improve animation quality and fix text overlay issues
         fixed_code = self._improve_animation_quality(fixed_code)
+        
+        # If scene_class_name is provided, ensure the class is named correctly
+        if scene_class_name:
+            # Check if we need to rename a class
+            any_scene_pattern = r"class\s+(\w+)\s*\(\s*Scene\s*\)\s*:"
+            any_class_match = re.search(any_scene_pattern, fixed_code)
+            
+            if any_class_match:
+                found_class_name = any_class_match.group(1)
+                if found_class_name != scene_class_name:
+                    # Rename the class
+                    print(f"Renaming class from {found_class_name} to {scene_class_name}")
+                    fixed_code = re.sub(
+                        rf"class\s+{found_class_name}\s*\(\s*Scene\s*\)\s*:", 
+                        f"class {scene_class_name}(Scene):", 
+                        fixed_code
+                    )
         
         return fixed_code
     
@@ -229,36 +249,16 @@ class SceneGenerator:
                         print(f"Second attempt Manim stderr: {stderr}")
                     
                     if process.returncode != 0:
-                        # If we still have issues, try one more time with an even more aggressive approach
+                        # If we still have issues, raise an error
                         if "SyntaxError" in stderr:
-                            print("Applying last-resort syntax fixes...")
-                            fixed_code = self._apply_last_resort_fixes(fixed_code)
-                            
-                            with open(temp_file_path, "w") as f:
+                            # Save the problematic code for debugging
+                            debug_file = f"debug_scene_{generation_id}.py"
+                            with open(debug_file, "w") as f:
                                 f.write(fixed_code)
-                            
-                            # Final attempt
-                            process = subprocess.Popen(
-                                command,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                text=True
-                            )
-                            stdout, stderr = process.communicate()
-                            
-                            print(f"Final attempt Manim stdout: {stdout}")
-                            if stderr:
-                                print(f"Final attempt Manim stderr: {stderr}")
-                            
-                            if process.returncode != 0:
-                                # Save the problematic code for debugging
-                                debug_file = f"debug_scene_{generation_id}.py"
-                                with open(debug_file, "w") as f:
-                                    f.write(fixed_code)
-                                print(f"Saved problematic code to {debug_file} for inspection")
-                                raise Exception(f"Manim rendering failed even after fixes: {stderr}")
+                            print(f"Saved problematic code to {debug_file} for inspection")
+                            raise Exception(f"Manim rendering failed with syntax errors: {stderr}")
                         else:
-                            raise Exception(f"Manim rendering failed even after fixes: {stderr}")
+                            raise Exception(f"Manim rendering failed: {stderr}")
                     
             except Exception as e:
                 print(f"Error during Manim execution: {str(e)}")
@@ -338,59 +338,6 @@ class SceneGenerator:
         
         return '\n'.join(fixed_lines)
     
-    def _apply_last_resort_fixes(self, code: str) -> str:
-        """Apply last-resort fixes for syntax issues that couldn't be fixed automatically."""
-        # Start with a clean slate - extract just the essential parts
-        imports = []
-        class_def = []
-        construct_method = []
-        
-        # Extract imports
-        lines = code.split('\n')
-        for line in lines:
-            if line.strip().startswith(('import ', 'from ')):
-                imports.append(line.strip())
-        
-        # Find class definition
-        for i, line in enumerate(lines):
-            if line.strip().startswith('class CustomAnimation'):
-                class_def.append(line.strip())
-                
-                # Find construct method
-                for j in range(i+1, len(lines)):
-                    if lines[j].strip().startswith('def construct'):
-                        # We found the construct method
-                        method_line = '    ' + lines[j].strip()
-                        construct_method.append(method_line)
-                        
-                        # Add basic animation code that's guaranteed to work
-                        construct_method.append('        title = Text("Simplified Animation")')
-                        construct_method.append('        self.play(Write(title))')
-                        construct_method.append('        self.wait(2)')
-                        construct_method.append('        self.play(FadeOut(title))')
-                        construct_method.append('        self.wait(1)')
-                        break
-                break
-        
-        # If we couldn't find some parts, use defaults
-        if not imports:
-            imports = ['from manim import *', 'import numpy as np', 'import math']
-        
-        if not class_def:
-            class_def = ['class CustomAnimation(Scene):']
-            
-        if not construct_method:
-            construct_method = [
-                '    def construct(self):',
-                '        title = Text("Simplified Animation")',
-                '        self.play(Write(title))',
-                '        self.wait(2)'
-            ]
-        
-        # Combine everything
-        rebuilt_code = '\n'.join(imports) + '\n\n' + '\n'.join(class_def) + '\n' + '\n'.join(construct_method)
-        return rebuilt_code
-            
     def cleanup(self, file_path: str) -> None:
         """
         Cleans up temporary files after video generation.
@@ -631,4 +578,380 @@ class SceneGenerator:
                     fixed_lines.insert(i + 1, comment)
                     break
                     
-        return '\n'.join(fixed_lines) 
+        return '\n'.join(fixed_lines)
+
+    def _generate_scene_prompt(self, section_title: str, section_content: str, scene_class_name: str) -> str:
+        """Generate a specialized prompt for a single scene."""
+        return f"""Create a Manim scene for JUST THIS SECTION of a larger educational animation:
+
+SECTION TITLE: {section_title}
+
+SECTION CONTENT:
+{section_content}
+
+CREATE ONLY ONE SELF-CONTAINED SCENE with these requirements:
+1. The scene class MUST be named exactly: {scene_class_name}
+2. The scene class MUST extend Scene
+3. You MUST include all necessary imports at the top (from manim import *, import math, import numpy as np)
+4. ALL animation code MUST be inside the construct method
+5. Use ONLY Text objects (NOT Tex or MathTex)
+6. Use Create() instead of ShowCreation() as it's deprecated
+7. Always CLEANUP objects with FadeOut() before introducing new objects in the same area
+8. Keep ALL text within the visible screen boundaries (-6 to 6 for both x and y coordinates)
+9. Use appropriate wait times between animations (self.wait(1) for normal pauses, shorter for quick transitions)
+10. Ensure SMOOTH transitions between elements
+11. Use color effectively to highlight important concepts
+
+EXTREMELY IMPORTANT:
+- Focus ONLY on this section's content, not the entire animation
+- The code MUST be ready to run as a standalone scene
+- NO explanations or comments outside of the code
+- NO markdown formatting or backticks
+- Create CLEAR, ENGAGING visualizations
+- ONLY return Python code
+"""
+
+    def create_modular_video(
+        self,
+        prompt: str,
+        narration_script: str,
+        output_dir: str,
+        generation_id: str,
+        llm_handler
+    ) -> str:
+        """
+        Creates a video by breaking down the task into multiple scenes.
+        
+        Args:
+            prompt: The user's original prompt
+            narration_script: The generated narration script
+            output_dir: Directory to store temporary files
+            generation_id: Unique identifier for this generation
+            llm_handler: The LLM handler to use for code generation
+            
+        Returns:
+            The generation_id of the video, which can be used to access it via the API
+        """
+        try:
+            # Make sure outputs directory exists
+            os.makedirs("outputs", exist_ok=True)
+            
+            # Parse narration script to identify sections
+            sections = self._parse_narration_sections(narration_script)
+            
+            # Generate a separate scene class for each section
+            scene_classes = []
+            scene_codes = []
+            
+            for i, section in enumerate(sections):
+                # Generate scene code for this section only
+                scene_class_name = f"Scene{i+1}_{self._sanitize_name(section['title'])}"
+                scene_prompt = self._generate_scene_prompt(
+                    section_title=section['title'],
+                    section_content=section['content'],
+                    scene_class_name=scene_class_name
+                )
+                
+                # Pass a smaller, focused prompt to the LLM
+                scene_code = llm_handler.generate_manim_code(scene_prompt)
+                
+                # Validate the code has the required elements before fixing
+                if not self._validate_scene_code(scene_code, scene_class_name):
+                    print(f"Generated code for {scene_class_name} does not have required elements")
+                    print(f"Raw code: {scene_code[:200]}...")
+                    # Try regenerating the code with a more explicit prompt
+                    enhanced_prompt = self._generate_enhanced_scene_prompt(
+                        section_title=section['title'],
+                        section_content=section['content'],
+                        scene_class_name=scene_class_name
+                    )
+                    print(f"Trying again with enhanced prompt for {scene_class_name}")
+                    scene_code = llm_handler.generate_manim_code(enhanced_prompt)
+                    
+                    # Check if we now have valid code
+                    if not self._validate_scene_code(scene_code, scene_class_name):
+                        print(f"Second attempt failed for {scene_class_name}")
+                        raise Exception(f"Generated code does not have required elements for section '{section['title']}'")
+                
+                # Apply standard fixes including fixing the class name if needed
+                scene_code = self._fix_manim_code(scene_code, scene_class_name)
+                scene_classes.append(scene_class_name)
+                scene_codes.append(scene_code)
+            
+            # Generate the combined scene that will call all sub-scenes
+            full_code = self._generate_combined_scene(scene_classes, scene_codes, generation_id)
+            
+            # Save the combined code to a file
+            temp_file_path = os.path.join(output_dir, f"scene_{generation_id}.py")
+            with open(temp_file_path, "w") as f:
+                f.write(full_code)
+            
+            # Print generated code for debugging
+            print(f"\nGenerated combined Manim code for scene_{generation_id}.py:")
+            print("--------------------------------------------------")
+            print(full_code[:500] + "..." if len(full_code) > 500 else full_code)
+            print("--------------------------------------------------\n")
+            
+            # Run Manim to generate the video
+            command = [
+                "manim",
+                "-qm",  # medium quality
+                "--format=mp4",
+                "--output_file", generation_id,
+                "--media_dir", "outputs",
+                temp_file_path,
+                "CustomAnimation"  # The main combined scene class
+            ]
+            
+            # Print the command for debugging
+            print(f"Running command: {' '.join(command)}")
+            
+            # Run Manim
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            stdout, stderr = process.communicate()
+            
+            print(f"Manim stdout: {stdout}")
+            if stderr:
+                print(f"Manim stderr: {stderr}")
+            
+            if process.returncode != 0:
+                # If the first attempt failed, try aggressive fixes and retry
+                print("First attempt failed, applying aggressive fixes...")
+                fixed_code = self._apply_aggressive_fixes(full_code, stderr)
+                
+                with open(temp_file_path, "w") as f:
+                    f.write(fixed_code)
+                
+                # Retry running Manim
+                process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                stdout, stderr = process.communicate()
+                
+                if process.returncode != 0:
+                    # If still failed, report the error
+                    print("Second attempt failed")
+                    raise Exception(f"Failed to generate video: {stderr}")
+            
+            # Search for the generated video file
+            video_path = self._find_video_file(generation_id)
+            if not video_path:
+                raise Exception("Video file not found after generation")
+            
+            # Cleanup temporary files if needed
+            self.cleanup(temp_file_path)
+            
+            return generation_id
+            
+        except Exception as e:
+            print(f"Error in create_modular_video: {str(e)}")
+            raise
+    
+    def _parse_narration_sections(self, narration_script: str) -> List[Dict[str, str]]:
+        """Parse the narration script into sections based on timestamps."""
+        # Regular expression to find timestamp sections like [00:00] TITLE
+        section_pattern = r'\[([\d:]+)\]\s+([^\n]+)(?:\n(.*?))?(?=\n\[[\d:]+\]|\Z)'
+        sections = []
+        
+        for match in re.finditer(section_pattern, narration_script, re.DOTALL):
+            sections.append({
+                'timestamp': match.group(1),
+                'title': match.group(2),
+                'content': match.group(3).strip() if match.group(3) else ""
+            })
+        
+        return sections
+    
+    def _sanitize_name(self, name: str) -> str:
+        """Convert a section name to a valid Python class name."""
+        # Remove non-alphanumeric characters and replace spaces with underscores
+        sanitized = re.sub(r'[^a-zA-Z0-9_]', '', name.replace(' ', '_'))
+        # Ensure it starts with a letter
+        if sanitized and not sanitized[0].isalpha():
+            sanitized = 'S_' + sanitized
+        return sanitized
+    
+    def _generate_combined_scene(self, scene_classes: List[str], scene_codes: List[str], generation_id: str) -> str:
+        """Generate a combined scene that incorporates all subscenes."""
+        # Extract imports from all scene codes
+        all_imports = set()
+        for code in scene_codes:
+            import_lines = [line for line in code.split('\n') if line.startswith('import') or line.startswith('from')]
+            all_imports.update(import_lines)
+        
+        combined_code = """
+from manim import *
+import math
+import numpy as np
+
+{imports}
+
+{scene_codes}
+
+class CustomAnimation(Scene):
+    def construct(self):
+        # Call each scene's content in sequence
+        {scene_calls}
+        
+        # Final wait
+        self.wait(2)
+"""
+        
+        # Format the scene calls
+        scene_calls = []
+        for class_name in scene_classes:
+            scene_calls.append(f"self.play_scene_{class_name}()")
+        
+        # Generate methods to call each scene
+        scene_methods = []
+        for i, class_name in enumerate(scene_classes):
+            scene_methods.append(f"""
+    def play_scene_{class_name}(self):
+        # Play the content from {class_name}
+        scene = {class_name}()
+        
+        # Extract the animations from the scene
+        old_construct = scene.construct
+        
+        # Monkey patch the construct method to capture animations
+        def new_construct(s):
+            # Store the original methods
+            orig_play = s.play
+            orig_wait = s.wait
+            orig_add = s.add
+            
+            # Override methods to use this scene's context
+            def wrapped_play(*args, **kwargs):
+                self.play(*args, **kwargs)
+            
+            def wrapped_wait(*args, **kwargs):
+                self.wait(*args, **kwargs)
+                
+            def wrapped_add(*args, **kwargs):
+                result = self.add(*args, **kwargs)
+                return result
+            
+            # Replace methods for execution
+            s.play = wrapped_play
+            s.wait = wrapped_wait
+            s.add = wrapped_add
+            
+            # Call the original construct
+            return old_construct()
+            
+        scene.construct = new_construct.__get__(scene, type(scene))
+        scene.construct()
+        
+        # Wait between scenes
+        self.wait(1)
+""")
+        
+        # Combine everything
+        formatted_code = combined_code.format(
+            imports="\n".join(all_imports),
+            scene_codes="\n\n".join(scene_codes),
+            scene_calls="\n        ".join(scene_calls)
+        )
+        
+        # Add the scene methods
+        formatted_code += "\n".join(scene_methods)
+        
+        return formatted_code
+    
+    def _find_video_file(self, generation_id: str) -> Optional[str]:
+        """Find the generated video file in the outputs directory."""
+        # Check all possible locations
+        possible_locations = [
+            os.path.join("outputs", f"{generation_id}.mp4"),
+            os.path.join("outputs", "videos", f"scene_{generation_id}", "720p30", f"{generation_id}.mp4"),
+            os.path.join("outputs", "videos", f"scene_{generation_id}", "1080p60", f"{generation_id}.mp4"),
+            os.path.join("outputs", "videos", f"scene_{generation_id}", "480p15", f"{generation_id}.mp4"),
+        ]
+        
+        for location in possible_locations:
+            if os.path.exists(location):
+                return location
+                
+        return None 
+
+    def _validate_scene_code(self, code: str, scene_class_name: str) -> bool:
+        """
+        Validate that the generated code has the required elements:
+        1. Proper imports
+        2. Class definition with the correct name
+        3. construct method
+        """
+        # Check if code is too short (likely incomplete or truncated)
+        if len(code) < 50:
+            print(f"Code is too short: only {len(code)} characters")
+            return False
+            
+        # Check required imports
+        has_manim_import = "from manim import" in code
+        
+        # Check for class definition - first try exact name
+        class_definition_pattern = rf"class\s+{scene_class_name}\s*\(\s*Scene\s*\)\s*:"
+        has_class_definition = bool(re.search(class_definition_pattern, code))
+        
+        # If not found, check for any Scene class
+        if not has_class_definition:
+            any_scene_pattern = r"class\s+(\w+)\s*\(\s*Scene\s*\)\s*:"
+            any_class_match = re.search(any_scene_pattern, code)
+            if any_class_match:
+                # Found a scene class with the wrong name - we'll fix it later
+                has_class_definition = True
+                print(f"Found class {any_class_match.group(1)} instead of {scene_class_name} - will fix")
+        
+        # Check for construct method
+        construct_pattern = r"def\s+construct\s*\(\s*self\s*\)\s*:"
+        has_construct_method = bool(re.search(construct_pattern, code))
+        
+        valid = has_manim_import and has_class_definition and has_construct_method
+        
+        if not valid:
+            print(f"Validation failed for {scene_class_name}:")
+            print(f"  Has manim import: {has_manim_import}")
+            print(f"  Has class definition: {has_class_definition}")
+            print(f"  Has construct method: {has_construct_method}")
+            
+        return valid
+    
+    def _generate_enhanced_scene_prompt(self, section_title: str, section_content: str, scene_class_name: str) -> str:
+        """Generate an even more explicit prompt for scene regeneration after failure."""
+        return f"""I need EXACT, PRECISE Manim animation code for a section titled "{section_title}".
+
+IMPORTANT: Your response MUST follow this EXACT pattern:
+
+```python
+from manim import *
+import math
+import numpy as np
+
+class {scene_class_name}(Scene):
+    def construct(self):
+        # Your animation code here
+        # For example:
+        title = Text("{section_title}")
+        self.play(Write(title))
+        self.wait(1)
+        # More animations...
+        self.wait(2)
+```
+
+DO NOT include ANY explanation or commentary - ONLY return working Python code.
+The code MUST define a class named `{scene_class_name}` that inherits from Scene.
+The code MUST include a `construct` method with `self` parameter.
+The code should visualize this content: 
+
+{section_content}
+
+Again, your response must ONLY contain Python code in the exact format I've specified.
+""" 

@@ -163,156 +163,156 @@ Format the script like this:
         return script
     
     def generate_manim_code(self, prompt: str, narration_script: str = None) -> str:
+        """
+        Generate Manim code for animation using Groq.
+        """
         # For all prompts, first generate a narration script if not provided
         if narration_script is None:
             narration_script = self.generate_narration_script(prompt)
-        
-        # Enhance the user prompt for Manim code generation
-        enhanced_prompt = f"""Create Manim animation code for the following educational concept:
-{prompt}
-
-Here is the narration script that the animation should follow exactly:
-{narration_script}
-
-Requirements:
-1. Create animations that PRECISELY match the narration script sections and timing
-2. Include all necessary imports (start with "from manim import *")
-3. Always include "import math" and "import numpy as np"
-4. Name the scene class 'CustomAnimation'
-5. Include detailed comments that reference the script timestamps
-6. Use appropriate self.wait() durations to match narration timing - typically:
-   - 1-2 seconds for short sentences
-   - 2-3 seconds for complex concepts
-   - 0.5-1 seconds for transitions
-7. Time visual elements to appear exactly when they would be mentioned in the narration
-8. Use vibrant colors to enhance understanding and visual distinction
-9. Add clear text labels that match key phrases from the script
-10. IMPORTANT: Do NOT use Tex or MathTex objects as they require LaTeX. Use Text instead.
-11. IMPORTANT: Use Create() instead of ShowCreation() as it's deprecated
-12. EXTREMELY IMPORTANT: Do NOT include any triple backticks (```) or markdown formatting in your code
-13. EXTREMELY IMPORTANT: Only return pure Python code that can be executed directly
-14. CRITICALLY IMPORTANT: Always remove or fade out text and objects before adding new ones in the same space
-15. CRITICALLY IMPORT: Use Transform() to update text/objects rather than creating new ones and leaving old ones
-16. CRITICALLY IMPORTANT: Define clear spatial zones on the screen and maintain consistent positioning:
-    - title_region = UP * 3.5
-    - main_region = ORIGIN
-    - explanation_region = DOWN * 3
-17. Always group related objects with VGroup for easier management
-18. When explaining step-by-step processes, use transforms to show progressive changes
-19. Always use FadeOut() for objects that are no longer needed to keep the scene clean
-20. When showing multiple items, arrange them with proper spacing using arrange() or position them with UP/DOWN/LEFT/RIGHT
-21. CRITICALLY IMPORTANT: Create a COMPREHENSIVE and IN-DEPTH animation - don't rush the explanation
-22. Take as much time as needed to fully explain the concept - there is NO time limit
-23. The animation should match the narration script length, however long that may be
-24. CRITICALLY IMPORTANT: Ensure all text elements stay within visible screen boundaries:
-    - Keep coordinate values between -6 and 6 for both x and y axes
-    - Use helper functions to ensure text stays within boundaries
-    - Scale text if needed to fit within viewable area
-    - Check positions especially for dynamic or programmatically placed text
-
-If you can't create a specific animation for this prompt, do NOT use a generic template. Instead, create a targeted animation that addresses the prompt as specifically as possible.
-
-The code MUST start exactly like this:
+            
+        # Create an explicit code template to help the model understand the expected format
+        code_template = '''
 from manim import *
 import math
 import numpy as np
 
 class CustomAnimation(Scene):
     def construct(self):
-        # Define screen regions for better organization
+        # Define regions for organization
         title_region = UP * 3.5
         main_region = ORIGIN
-        explanation_region = DOWN * 3 + LEFT * 3
+        explanation_region = DOWN * 3
         
-        # Define safe boundaries for text placement
-        boundary_threshold = 6  # Max distance from origin to stay in bounds
+        # Create a title
+        title = Text("Title Text", color=BLUE).move_to(title_region)
+        self.play(Write(title))
+        self.wait(1)
         
-        def ensure_within_boundaries(position, threshold=boundary_threshold):
-            '''Ensure a position is within the safe boundaries of the screen.'''
-            if isinstance(position, np.ndarray):
-                # Normalize the position if it's too far from origin
-                magnitude = np.linalg.norm(position)
-                if magnitude > threshold:
-                    return position * (threshold / magnitude)
-            return position
+        # Create content
+        text1 = Text("First explanation point", color=WHITE).scale(0.7).move_to(explanation_region)
+        self.play(FadeIn(text1))
+        self.wait(1.5)
         
-        # Your code here aligned with narration timestamps
+        # Create visual elements
+        circle = Circle(radius=1.5, color=GREEN).move_to(main_region)
+        self.play(Create(circle))
+        self.wait(1)
+        
+        # Show relationships
+        arrow = Arrow(start=text1.get_top(), end=circle.get_bottom(), color=YELLOW)
+        self.play(Create(arrow))
+        self.wait(1)
+        
+        # Clean up and transition
+        self.play(FadeOut(text1), FadeOut(arrow))
+        
+        # Add more content
+        text2 = Text("Second explanation point", color=WHITE).scale(0.7).move_to(explanation_region)
+        self.play(FadeIn(text2))
+        self.wait(1.5)
+        
+        # Final cleanup
+        self.play(FadeOut(circle), FadeOut(text2), FadeOut(title))
+        self.wait(1)
+'''
+
+        # Enhanced prompt with explicit instructions for Groq
+        enhanced_prompt = f"""Generate Manim animation code based on this prompt: 
+{prompt}
+
+FOLLOW THESE REQUIREMENTS EXACTLY:
+1. The code MUST start with 'from manim import *' and include all necessary imports
+2. The class MUST follow the exact pattern seen in this template:
+
+{code_template}
+
+3. IMPORTANT: Your response should ONLY contain Python code with no explanations outside of the code
+4. Use Text objects instead of MathTex or Tex
+5. Use Create() instead of ShowCreation()
+6. Make sure all code is properly indented inside methods
+
+For your reference, here are the key elements your code MUST contain:
+- All necessary imports at the top
+- A class that extends Scene
+- A construct method taking self parameter
+- Proper use of self.play() and self.wait()
+- Text positioning that stays within visible boundaries (-6 to 6 coordinate range)
+- Proper cleanup with FadeOut for elements no longer needed
+
+DO NOT include any markdown formatting or explanation - ONLY RETURN VALID PYTHON CODE.
 """
 
-        # Use direct HTTP request to Groq API
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-        
-        data = {
-            "messages": [
-                {"role": "system", "content": self.animation_system_prompt},
-                {"role": "user", "content": enhanced_prompt}
-            ],
-            "model": "meta-llama/llama-4-maverick-17b-128e-instruct",
-            "max_tokens": 8000,
-            "temperature": 0.7
-        }
-        
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers,
-            json=data
-        )
-        
-        if response.status_code != 200:
-            raise Exception(f"Animation generation API request failed with status {response.status_code}: {response.text}")
-        
-        result = response.json()
-        raw_generated_code = result["choices"][0]["message"]["content"].strip()
-        
-        # For debugging
-        print("Raw response from Groq:")
-        print(raw_generated_code[:100] + "..." if len(raw_generated_code) > 100 else raw_generated_code)
-        
-        # Check if response starts with explanatory text and remove it
-        if not raw_generated_code.startswith("from manim import"):
-            # Find the first line that looks like code
-            code_start = raw_generated_code.find("from manim import")
-            if code_start != -1:
-                raw_generated_code = raw_generated_code[code_start:]
-            else:
-                raise Exception("Could not find proper Manim import statement in generated code")
-        
-        # Check for common issues
-        if "MathTex(" in raw_generated_code or "Tex(" in raw_generated_code:
-            raise Exception("Generated code contains LaTeX objects which are not supported")
+        # Add narration script context if provided
+        if narration_script:
+            enhanced_prompt += f"\n\nFollow this narration script timing and content for your animation:\n{narration_script}\n"
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
             
-        if "math.sqrt" in raw_generated_code and "import math" not in raw_generated_code:
-            # Add math import if missing
-            raw_generated_code = "import math\n" + raw_generated_code
+            data = {
+                "messages": [
+                    {"role": "system", "content": "You are an expert Manim programmer who generates perfect Python code for animations."},
+                    {"role": "user", "content": enhanced_prompt}
+                ],
+                "model": "llama3-70b-8192",
+                "max_tokens": 8192,
+                "temperature": 0.7
+            }
             
-        if "np." in raw_generated_code and "import numpy as np" not in raw_generated_code:
-            # Add numpy import if missing
-            raw_generated_code = "import numpy as np\n" + raw_generated_code
-        
-        # Replace deprecated methods
-        raw_generated_code = raw_generated_code.replace("ShowCreation(", "Create(")
-        
-        # Validate the basic structure
-        if not self.validate_code(raw_generated_code):
-            raise Exception("Generated code does not have required elements")
+            print("Sending request to Groq API...")
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json=data
+            )
             
-        # Combine the script and animation code into a single result
-        # Add the narration script as a comment at the top of the animation code
-        script_comment = """
-# NARRATION SCRIPT:
-# ----------------
-"""
-        for line in narration_script.split('\n'):
-            script_comment += f"# {line}\n"
+            if response.status_code != 200:
+                print(f"API request failed with status {response.status_code}: {response.text}")
+                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+            
+            result = response.json()
+            
+            # Extract the code from the response
+            raw_code = result['choices'][0]['message']['content']
+            print(f"Raw response from Groq:\n{raw_code[:100]}...")
+            
+            # Ensure we're only returning code, not explanation
+            code = self._extract_code(raw_code)
+            
+            if not code or len(code) < 150:  # Basic validation for code length
+                print("Generated code is too short or empty")
+                raise Exception("Generated code is too short or empty")
+            
+            return code
+            
+        except Exception as e:
+            print(f"Error in generate_manim_code: {str(e)}")
+            raise Exception(f"Script generation API request failed: {str(e)}")
+            
+    def _extract_code(self, raw_response: str) -> str:
+        """Extract just the code from the raw LLM response, removing any explanations."""
+        # If the response contains code blocks, extract them
+        code_block_pattern = r'```(?:python)?(.*?)```'
+        code_blocks = re.findall(code_block_pattern, raw_response, re.DOTALL)
         
-        # Insert the script comment after the imports
-        manim_import_end = raw_generated_code.find('\n', raw_generated_code.find('from manim import'))
-        final_code = raw_generated_code[:manim_import_end+1] + script_comment + raw_generated_code[manim_import_end+1:]
+        if code_blocks:
+            # Join all code blocks, excluding the language identifier
+            return '\n'.join(block.strip() for block in code_blocks)
         
-        return final_code
+        # Look for essential markers of Python code (imports and class definitions)
+        if "from manim import" in raw_response and "class" in raw_response and "def construct" in raw_response:
+            return raw_response
+            
+        # Try to find the code beginning with common imports
+        if "from manim import" in raw_response:
+            code_start = raw_response.find("from manim import")
+            return raw_response[code_start:].strip()
+            
+        # If nothing works, just return the whole response for further processing
+        return raw_response
     
     def validate_code(self, code: str) -> bool:
         """

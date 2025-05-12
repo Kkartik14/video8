@@ -2,13 +2,14 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
 
-export const generateVideo = async (prompt, model) => {
+export const generateVideo = async (prompt, model, use_modular = true) => {
   try {
-    console.log(`Sending request to ${API_URL}/generate with model: ${model}`);
+    console.log(`Sending request to ${API_URL}/generate with model: ${model}, modular: ${use_modular}`);
     
     const response = await axios.post(`${API_URL}/generate`, {
       prompt,
       model,
+      use_modular
     });
     
     console.log('API response:', response.data);
